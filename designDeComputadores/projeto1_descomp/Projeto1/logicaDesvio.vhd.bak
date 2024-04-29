@@ -1,0 +1,24 @@
+library ieee;
+use ieee.std_logic_1164.all;
+
+entity logicaDesvio is
+  port ( JMP : in std_logic;
+			JEQ : in std_logic;
+			FlagZero : in std_logic;
+			JSR : in std_logic;
+			RET : in std_logic;
+         saida : out std_logic_vector(1 downto 0)
+  );
+end entity;
+
+architecture comportamento of logicaDesvio is
+
+  constant ativo  : std_logic := '1';
+  constant desativo  : std_logic := '0';
+
+  begin
+saida <= "01" when (JMP = ativo or (JEQ = ativo and FlagZero = ativo) or JSR = ativo) else
+			"10" when (RET = ativo) else
+			"00";
+         
+end architecture;

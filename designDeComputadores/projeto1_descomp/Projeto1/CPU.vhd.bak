@@ -1,0 +1,206 @@
+library ieee;
+use ieee.std_logic_1164.all;
+
+entity CPU is
+  generic (
+	 larguraDados : natural := 8;
+    larguraAddr  : natural := 9;
+    larguraInst  : natural := 13
+  );
+  port (
+  
+    -- Debug
+	 ULA_OUT: out std_logic_vector(7 downto 0);
+	 ULAOP_OUT: out std_logic_vector(1 downto 0);
+	 CS: out std_logic_vector(11 downto 0);
+  
+	 -- Control
+    CLOCK   : in  std_logic;
+	 RST     : in  std_logic;
+	 Rd      : out std_logic;
+	 Wr      : out std_logic;
+	 
+	 -- ROM_Address
+	 ROM_Address : out std_logic_vector(8 downto 0);
+	 
+	 -- Instruction_IN (InstructionCode)
+	 Instruction_IN : in std_logic_vector(12 downto 0);
+	 
+	 -- Data_IN (MemoryOutput)
+	 Data_IN : in std_logic_vector(7 downto 0);
+	 
+	 -- Data_OUT (REGA_OUT)
+	 Data_OUT : out std_logic_vector(7 downto 0);
+	 
+	 -- Data_Address
+	 Data_Address : out std_logic_vector(8 downto 0)
+  );
+end entity;
+
+architecture arch of CPU is
+  -- REGA
+  signal REGA_OUT : std_logic_vector(7 downto 0);
+  signal REGA_Enable : std_logic;
+  
+  -- MUX1
+  signal MUX1_To_ULA_B : std_logic_vector(7 downto 0);
+  signal MUX1_Select : std_logic;
+  
+  -- MUXProxPC
+  signal NextPC : std_logic_vector(larguraAddr-1 downto 0);
+  signal MUXProxPC_Select : std_logic_vector(1 downto 0);
+  signal MUXProxPC_To_PC : std_logic_vector(8 downto 0);
+    
+	-- REG_RETORNO	 
+  signal RegRET_To_MPC : std_logic_vector(8 downto 0);
+  signal Hab_Esc_Ret : std_logic;
+  
+  -- FlipFlop
+  signal FlagZero : std_logic;
+  signal FlagZ : std_logic;
+	 
+  -- ULA
+  signal ULA_Output : std_logic_vector(7 downto 0);
+  signal ULA_Operation : std_logic_vector(1 downto 0);
+  signal ULAisZero : std_logic;
+  
+  -- decoderInstru
+  signal ControlSignals : std_logic_vector(11 downto 0);
+ 
+  -- BranchLogic
+  signal JMP : std_logic;
+  signal JEQ : std_logic;
+  signal JSR : std_logic;
+  signal RET : std_logic;
+  
+  -- RAM ROM 
+  signal RAM_ReadEnable : std_logic;
+  signal RAM_WriteEnable : std_logic;
+  signal sig_ROM_Address : std_logic_vector(8 downto 0);
+  
+begin
+  
+  -- REGA (register) instantiation
+  REGA: entity work.registradorGenerico generic map (larguraDados => larguraDados)
+    port map (
+      DIN => ULA_Output, 
+      DOUT => REGA_OUT, 
+      ENABLE => REGA_Enable, 
+      CLK => CLOCK,
+		RST => RST
+    );
+ 
+  -- Multiplexer instantiation
+  MUX1: entity work.muxGenerico2x1 generic map (larguraDados => larguraDados)
+    port map (
+      entradaA_MUX => Data_IN,
+      entradaB_MUX => Instruction_IN(7 downto 0),
+      seletor_MUX => MUX1_Select,
+      saida_MUX => MUX1_To_ULA_B
+    );
+	 
+	-- Mux Next PC
+   MUXProxPC: entity work.muxGenerico4x1 generic map (larguraDados => larguraAddr)
+    port map (
+      entradaA_MUX => NextPC,
+      entradaB_MUX => Instruction_IN(8 downto 0),
+		entradaC_MUX => RegRET_To_MPC,
+		entradaD_MUX => "000000000",
+      seletor_MUX => MUXProxPC_Select,
+      saida_MUX => MUXProxPC_To_PC
+    );
+	 
+	-- Reg Ret	 
+	REG_RETORNO: entity work.registradorGenerico generic map (larguraDados => larguraAddr)
+    port map (
+      DIN => NextPC, 
+      DOUT => RegRET_To_MPC, 
+      ENABLE => Hab_Esc_Ret, 
+      CLK => CLOCK,
+		RST => RST
+    );
+	 
+	-- FlipFlop instantiation
+	FlipFlop: entity work.FlipFlop
+    port map (
+      DIN => ULAisZero, 
+      DOUT => FlagZero, 
+      ENABLE => FlagZ, 
+      CLK => CLOCK,
+		RST => RST
+    );
+
+   -- Program Counter (register) instantiation
+   PC: entity work.registradorGenerico generic map (larguraDados => larguraAddr)
+    port map (
+      DIN => MUXProxPC_To_PC, 
+      DOUT => sig_ROM_Address, 
+      ENABLE => '1', 
+      CLK => CLOCK,
+		RST => RST
+    );
+
+   -- Constant adder instantiation
+   incrementaPC: entity work.somaConstante generic map (larguraDados => larguraAddr, constante => 1)
+    port map (
+      entrada => sig_ROM_Address, 
+      saida => NextPC
+    );
+
+   -- ALU instantiation
+   ULA: entity work.ULA generic map(larguraDados => larguraDados)
+    port map (
+      entradaA => REGA_OUT, 
+      entradaB => MUX1_To_ULA_B, 
+      saida => ULA_Output, 
+      seletor => ULA_Operation
+    );
+  
+   -- Instruction DEC_Instrucao instantiation
+   DEC_Instrucao: entity work.decoderInstru
+    port map (
+      opcode => Instruction_IN(12 downto 9), 
+      saida => ControlSignals
+    );
+	 
+   -- Branch Logic 
+   BranchLogic: entity work.logicaDesvio
+    port map (
+      JMP => JMP, 
+      JEQ => JEQ, 
+      FlagZero => FlagZero,
+		JSR => JSR,
+		RET => RET,
+		saida => MUXProxPC_Select
+    );
+
+   -- Control signal assignments
+   Hab_Esc_Ret <= ControlSignals(11);
+   JMP <= ControlSignals(10);
+   RET <= ControlSignals(9);
+   JSR <= ControlSignals(8);
+   JEQ <= ControlSignals(7);
+   MUX1_Select <= ControlSignals(6);
+   REGA_Enable <= ControlSignals(5);
+   ULA_Operation(1) <= ControlSignals(4);
+	ULA_Operation(0) <= ControlSignals(3);
+   FlagZ <= ControlSignals(2);
+   RAM_ReadEnable <= ControlSignals(1);
+   RAM_WriteEnable <= ControlSignals(0);
+
+   -- Output assignments
+   Rd           <= RAM_ReadEnable;
+	Wr           <= RAM_WriteEnable;
+   ROM_Address  <= sig_ROM_Address;
+	Data_OUT     <= REGA_OUT;
+	Data_Address <= Instruction_IN(8 downto 0);
+	
+	-- Debug
+	ULA_OUT <= ULA_Output;
+	ULAOP_OUT <= ULA_Operation;
+	CS <= ControlSignals;
+  
+   ULAisZero <= not (ULA_Output(7) or ULA_Output(6) or ULA_Output(5) or ULA_Output(4) 
+   or ULA_Output(3) or ULA_Output(2) or ULA_Output(1) or ULA_Output(0));
+
+end arch;

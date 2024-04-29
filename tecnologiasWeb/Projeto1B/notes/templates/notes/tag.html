@@ -1,0 +1,45 @@
+{% extends "notes/base.html" %}
+{% load static %}
+
+{% block content %}
+
+  <main class="container">
+    <!-- {% for note in tag.note_set.all %}
+      {{note.title}}
+      {{note.content}}
+      {% endfor %} -->
+
+    <div class="card-container">
+        <div class = "tag">
+            <h1>{{tag.name}}</h1>
+          </div>
+        {% for note in tag.note_set.all %}
+        <div class="card">
+            <div class="card-header">
+            <h3 class="card-title">{{note.title}}</h3>
+
+            <div class="btns">
+                <a class="edit-btn" href=/update_tag/{{tag.id}}/{{note.id}}>
+                <img src="{% static 'notes/img/edit_icon.png' %}" class="edit_icon" alt="Edit Icon">
+                </a>
+                <a class="delete-btn" href=/delete_tag_card/{{tag.id}}/{{note.id}}>
+                <img src="{% static 'notes/img/delete_icon.png' %}" class="delete_icon" alt="Delete Icon">
+                </a>
+            </div>
+
+            </div>
+            <div class="card-content">
+            <p class="note_content">
+                {{note.content}}
+            </p>
+            </div>
+            <p class="note_tag">
+            #{{note.tag.name}}
+            </p>
+        </div>
+        {% endfor %}
+    </div>
+    
+</main>
+<script type="text/javascript" src="../static/notes/script/getit.js"></script>
+{% endblock %}

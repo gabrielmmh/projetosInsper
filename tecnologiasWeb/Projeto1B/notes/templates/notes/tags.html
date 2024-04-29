@@ -1,0 +1,31 @@
+{% extends "notes/base.html" %}
+{% load static %}
+
+{% block content %}
+
+  <main class="container">
+    <div class = "tag">
+      <h1>Suas Tags</h1>
+    </div>
+
+    <div class="card-container">
+      {% for tag in tags %}
+      {% csrf_token %}
+      <!-- <div class="tags">
+        <a class ="text_tag" href="/tag/{{tag.id}}">{{tag.name}}</a>
+      </div> -->
+    <div class="tags"> 
+      <a class= title_tag href="/tag/{{tag.id}}">
+        <p>{{tag.name}}</p>
+      </a>
+      <a class="delete-btn" href=/delete_tag/{{tag.id}}>
+        <img src="{% static 'notes/img/delete_icon.png' %}" class="delete_icon" alt="Delete Icon">
+      </a>
+    </div>
+
+      {% endfor %}
+    </div>
+  </div>
+</main>
+<script type="text/javascript" src="../static/notes/script/getit.js"></script>
+{% endblock %}

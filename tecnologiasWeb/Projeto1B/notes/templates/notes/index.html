@@ -1,0 +1,62 @@
+{% extends "notes/base.html" %}
+{% load static %}
+
+{% block content %}
+
+  <main class="container">
+
+    <div class="form-card">
+      <form method="post">
+        {% csrf_token %}
+        <input minlength="1" required
+        class="form-card-title"
+        type="text"
+        name="titulo"
+        placeholder="Título"
+      />
+      <textarea minlength="1" required
+        class="autoresize"
+        name="detalhes"
+        placeholder="Conteúdo"
+      ></textarea>
+      <textarea minlength="1" required
+        class="input_tag"
+        name="tag"
+        placeholder="Tag"
+      ></textarea>
+      
+      <button class="btn" type="submit">Criar</button>
+      </form>   
+      <button class="btn" onclick="window.location.href = '/tags';">Tags</button>
+    </div>
+
+<div class="card-container">
+    {% for note in notes %}
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">{{note.title}}</h3>
+
+        <div class="btns">
+          <a class="edit-btn" href=/update/{{note.id}}>
+            <img src="{% static 'notes/img/edit_icon.png' %}" class="edit_icon" alt="Edit Icon">
+          </a>
+          <a class="delete-btn" href=/delete/{{note.id}}>
+            <img src="{% static 'notes/img/delete_icon.png' %}" class="delete_icon" alt="Delete Icon">
+          </a>
+        </div>
+
+      </div>
+      <div class="card-content">
+        <p class="note_content">
+          {{note.content}}
+        </p>
+      </div>
+      <p class="note_tag">
+        #{{note.tag.name}}
+      </p>
+    </div>
+    {% endfor %}
+  </div>
+</main>
+<script type="text/javascript" src="../static/notes/script/getit.js"></script>
+{% endblock %}

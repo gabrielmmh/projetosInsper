@@ -1,0 +1,36 @@
+Quartus Prime Archive log --	C:/Users/pedro/OneDrive/Documents/Insper/6_semestre/designDeComputadores/projetos/projeto01/projeto1_descomp/Projeto1/Projeto1.qarlog
+
+Archive:	C:/Users/pedro/OneDrive/Documents/Insper/6_semestre/designDeComputadores/projetos/projeto01/projeto1_descomp/Projeto1/Projeto1.qar
+Date:		Mon Apr 15 12:17:54 2024
+Quartus Prime		20.1.0 Build 711 06/05/2020 SJ Lite Edition
+
+	=========== Files Selected: ===========
+C:/Users/pedro/OneDrive/Documents/Insper/6_semestre/designDeComputadores/projetos/projeto01/projeto1_descomp/Projeto1/CPU.vhd
+C:/Users/pedro/OneDrive/Documents/Insper/6_semestre/designDeComputadores/projetos/projeto01/projeto1_descomp/Projeto1/FlipFlop.vhd
+C:/Users/pedro/OneDrive/Documents/Insper/6_semestre/designDeComputadores/projetos/projeto01/projeto1_descomp/Projeto1/Projeto1.qpf
+C:/Users/pedro/OneDrive/Documents/Insper/6_semestre/designDeComputadores/projetos/projeto01/projeto1_descomp/Projeto1/Projeto1.qsf
+C:/Users/pedro/OneDrive/Documents/Insper/6_semestre/designDeComputadores/projetos/projeto01/projeto1_descomp/Projeto1/Projeto1.vhd
+C:/Users/pedro/OneDrive/Documents/Insper/6_semestre/designDeComputadores/projetos/projeto01/projeto1_descomp/Projeto1/ULA.vhd
+C:/Users/pedro/OneDrive/Documents/Insper/6_semestre/designDeComputadores/projetos/projeto01/projeto1_descomp/Projeto1/Waveform.vwf
+C:/Users/pedro/OneDrive/Documents/Insper/6_semestre/designDeComputadores/projetos/projeto01/projeto1_descomp/Projeto1/buffer_1porta.vhd
+C:/Users/pedro/OneDrive/Documents/Insper/6_semestre/designDeComputadores/projetos/projeto01/projeto1_descomp/Projeto1/buffer_8portas.vhd
+C:/Users/pedro/OneDrive/Documents/Insper/6_semestre/designDeComputadores/projetos/projeto01/projeto1_descomp/Projeto1/conversorHex7Seg.vhd
+C:/Users/pedro/OneDrive/Documents/Insper/6_semestre/designDeComputadores/projetos/projeto01/projeto1_descomp/Projeto1/decoder3x8.vhd
+C:/Users/pedro/OneDrive/Documents/Insper/6_semestre/designDeComputadores/projetos/projeto01/projeto1_descomp/Projeto1/decoderInstru.vhd
+C:/Users/pedro/OneDrive/Documents/Insper/6_semestre/designDeComputadores/projetos/projeto01/projeto1_descomp/Projeto1/displays.vhd
+C:/Users/pedro/OneDrive/Documents/Insper/6_semestre/designDeComputadores/projetos/projeto01/projeto1_descomp/Projeto1/edgeDetector.vhd
+C:/Users/pedro/OneDrive/Documents/Insper/6_semestre/designDeComputadores/projetos/projeto01/projeto1_descomp/Projeto1/keys.vhd
+C:/Users/pedro/OneDrive/Documents/Insper/6_semestre/designDeComputadores/projetos/projeto01/projeto1_descomp/Projeto1/leds.vhd
+C:/Users/pedro/OneDrive/Documents/Insper/6_semestre/designDeComputadores/projetos/projeto01/projeto1_descomp/Projeto1/logicaDesvio.vhd
+C:/Users/pedro/OneDrive/Documents/Insper/6_semestre/designDeComputadores/projetos/projeto01/projeto1_descomp/Projeto1/memoriaRAM.vhd
+C:/Users/pedro/OneDrive/Documents/Insper/6_semestre/designDeComputadores/projetos/projeto01/projeto1_descomp/Projeto1/memoriaROM.vhd
+C:/Users/pedro/OneDrive/Documents/Insper/6_semestre/designDeComputadores/projetos/projeto01/projeto1_descomp/Projeto1/muxGenerico2x1.vhd
+C:/Users/pedro/OneDrive/Documents/Insper/6_semestre/designDeComputadores/projetos/projeto01/projeto1_descomp/Projeto1/muxGenerico4x1.vhd
+C:/Users/pedro/OneDrive/Documents/Insper/6_semestre/designDeComputadores/projetos/projeto01/projeto1_descomp/Projeto1/registradorGenerico.vhd
+C:/Users/pedro/OneDrive/Documents/Insper/6_semestre/designDeComputadores/projetos/projeto01/projeto1_descomp/Projeto1/somaConstante.vhd
+C:/Users/pedro/OneDrive/Documents/Insper/6_semestre/designDeComputadores/projetos/projeto01/projeto1_descomp/Projeto1/switchs.vhd
+c:/intelfpga_lite/20.1/quartus/bin64/assignment_defaults.qdf
+	======= Total: 25 files to archive =======
+
+	================ Status: ===============
+All files archived successfully.

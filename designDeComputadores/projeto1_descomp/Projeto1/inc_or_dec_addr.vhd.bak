@@ -1,0 +1,29 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;    -- Biblioteca IEEE para funções aritméticas
+
+entity inc_or_dec_addr is
+    generic
+    (
+        larguraDados : natural := 32;
+        constante : natural := 1
+    );
+    port (
+      entrada:  in STD_LOGIC_VECTOR((larguraDados-1) downto 0);
+      seletor:  in std_logic;
+      saida:    out STD_LOGIC_VECTOR((larguraDados-1) downto 0)
+    );
+end entity;
+
+architecture comportamento of inc_or_dec_addr is
+
+   signal point_next     : STD_LOGIC_VECTOR((larguraDados-1) downto 0);
+   signal point_previous : STD_LOGIC_VECTOR((larguraDados-1) downto 0);
+    
+	begin
+		point_next     <= std_logic_vector(unsigned(entrada) + constante);
+      point_previous <= std_logic_vector(unsigned(entrada) - constante);
+		
+      saida <= point_next when (seletor = "0") else else
+					point_previous;
+end architecture;

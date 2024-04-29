@@ -1,0 +1,658 @@
+# Inicialização da FPGA e Variáveis
+.SETUP:
+    LDI $0              # Carrega 0 no acumulador para a inicialização
+    
+    # Zerando os displays de sete segmentos
+    STA @288            # HEX0
+    STA @289            # HEX1
+    STA @290            # HEX2
+    STA @291            # HEX3
+    STA @292            # HEX4
+    STA @293            # HEX5
+
+    # Apagando os LEDs
+    STA @256            # LEDR0 ~ LEDR7
+    STA @257            # LEDR8
+    STA @258            # LEDR9
+
+    # Inicializando as Variáveis de contagem como 0
+    STA @0              # Valor das unidades em memória
+    STA @1              # Valor das dezenas em memória
+    STA @2              # Valor das centenas em memória
+    STA @3              # Valor das unidades de milhar em memória
+    STA @4              # Valor das dezenas de milhar em memória
+    STA @5              # Valor das centenas de milhar em memória
+
+    # Apagando os LEDs
+
+    LDI $0              # Carrega 0 no acumulador
+    STA @256            # LEDR0 ~ LEDR7
+    STA @257            # LEDR8
+    STA @258            # LEDR9
+
+    # Salvando o valor 1 na posição 6 da memória para uso no incremento e como máscara AND
+    LDI $1              # Carrega 1 no acumulador
+    STA @6              # Salva o valor 1 em @6 (usado como máscara AND e leitura de KEY2)
+
+    # Salvando o valor 10 na posição 7 da memória para verificar o limite de contagem das casas
+    LDI $10             # Carrega 10 no acumulador
+    STA @7              # Salva o valor 10 em @7
+
+    # Salvando o valor 0 na posição 8 da memória para uso na verificação de KEY0, como auxílio no limite de incremento e verificar limite de decremento
+    LDI $0              # Carrega 0 no acumulador
+    STA @8              # Salva o valor 0 em @8
+
+    # Salvando flag de inibir contagem em @9
+    LDI $0              # Carrega 0 no acumulador
+    STA @9              # Salva o valor 0 em @9
+
+    LDI $0              # Carrega 0 no acumulador
+    STA @10             # Salva o valor 0 em @10 (usado para armazenar o limite de incremento das unidades)
+    STA @11             # Salva o valor 0 em @11 (usado para armazenar o limite de incremento das dezenas)
+    STA @12             # Salva o valor 0 em @12 (usado para armazenar o limite de incremento das centenas)
+    STA @13             # Salva o valor 0 em @13 (usado para armazenar o limite de incremento das unidades de milhar)
+    STA @14             # Salva o valor 0 em @14 (usado para armazenar o limite de incremento das dezenas de milhar)
+    STA @15             # Salva o valor 0 em @15 (usado para armazenar o limite de incremento das centenas de milhar)
+
+    LDI $0              # Carrega 0 no acumulador
+    STA @16             # Salva o valor 0 em @16 (usado para saber se o limite das unidades foi setado)
+    STA @17             # Salva o valor 0 em @17 (usado para saber se o limite das dezenas foi setado)
+    STA @18             # Salva o valor 0 em @18 (usado para saber se o limite das centenas foi setado)
+    STA @19             # Salva o valor 0 em @19 (usado para saber se o limite das unidades de milhar foi setado)
+    STA @20             # Salva o valor 0 em @20 (usado para saber se o limite das dezenas de milhar foi setado)
+    STA @21             # Salva o valor 0 em @21 (usado para saber se o limite das centenas de milhar foi setado)
+
+    LDI $0              # Carrega 0 no acumulador
+    STA @22             # Salva o valor 0 em @22 (usado para saber se o limite foi setado)
+
+    LDI $0              # Carrega 0 no acumulador
+    STA @23             # Salva o valor 0 em @23 (flag para indicar se é para incrementar ou decrementar)
+
+    # Fazendo o reset dos flip flops
+    STA @511            # Limpa Leitura KEYS
+
+    JMP @.MAIN_LOOP        # Pula para o início do loop principal após inicialização
+
+.MAIN_LOOP:
+
+    LDA @355           # Carrega o valor do botão KEY3
+    ANDI @6             # Aplica máscara AND para isolar o bit 0
+    CHECK @6              # Se KEY3 estiver pressionada, decrementa o contador
+    JEQ @.DEC_LIMIT_OVERFLOW
+
+    LDA @354            # Carrega o valor do botão KEY2
+    ANDI @6             # Aplica máscara AND para isolar o bit 0
+    CHECK @6              # Se KEY2 estiver pressionada, reinicia o contador
+    JEQ @.RESET_COUNTER
+
+    LDA @353            # Carrega o valor do botão KEY1
+    ANDI @6             # Aplica máscara AND para isolar o bit 0
+    CHECK @6              # Se KEY1 estiver pressionada, passa a setar o limite de incremento
+    JEQ @.SET_LIMIT_UN
+
+    LDA @352            # Carrega o valor do botão KEY0
+    ANDI @6             # Aplica máscara AND para isolar o bit 0
+    CHECK @8              # Se KEY0 não estiver pressionada, volta para o loop
+    JEQ @.MAIN_LOOP
+
+    LDA @9              # Carrega o valor da flag de inibir contagem
+    CHECK @6              # Se a flag estiver setada, volta para o loop
+    JEQ @.MAIN_LOOP
+
+    JSR @.INCREMENT     # Se KEY0 pressionado, pula para incrementar
+
+    JSR @.DISPLAY_VALUES # Mostra valores nas saídas
+
+    STA @511            # Limpa Leitura KEYS 
+
+    JMP @.CHECK_LIMIT   # Verifica se o limite foi alcançado
+
+    JMP @.MAIN_LOOP     # Retorna ao início do loop
+
+.DISPLAY_VALUES:
+    # Mostra os valores de contagem nos displays
+    LDA @0
+    STA @288           # HEX0 para unidades
+
+    LDA @1
+    STA @289           # HEX1 para dezenas
+
+    LDA @2
+    STA @290           # HEX2 para centenas
+
+    LDA @3
+    STA @291           # HEX3 para unidades de milhar
+
+    LDA @4
+    STA @292           # HEX4 para dezenas de milhar
+
+    LDA @5
+    STA @293           # HEX5 para centenas de milhar
+    
+    RET
+
+.INCREMENT:
+    LDA @0              # Carrega o valor atual das unidades
+    SOMA @6             # Incrementa o valor
+    STA @0              # Salva o valor incrementado
+
+    LDA @0              # Carrega o valor atualizado das unidades
+    CHECK @7              # Compara com 10 para ver se precisa resetar (valor negativo indica não atingiu 10 ainda)
+    
+    JLT @.RETURN_FROM_INCREMENT
+
+    LDA @1              # Carrega o valor atual das unidades
+    SOMA @6             # Incrementa dezenas
+    STA @1
+
+    LDA @1              # Carrega o valor atualizado das dezenas
+    CHECK @7              # Compara com 10 para ver se precisa resetar (valor negativo indica não atingiu 10 ainda)
+
+    JLT @.RETURN_FROM_INCREMENT
+
+    LDA @2              # Carrega o valor atual das centenas
+    SOMA @6             # Incrementa centenas
+    STA @2
+
+    LDA @2              # Carrega o valor atualizado das centenas
+    CHECK @7              # Compara com 10 para ver se precisa resetar (valor negativo indica não atingiu 10 ainda)
+
+    JLT @.RETURN_FROM_INCREMENT
+
+    LDA @3              # Carrega o valor atual das unidades de milhar
+    SOMA @6             # Incrementa unidades de milhar
+    STA @3
+
+    LDA @3              # Carrega o valor atualizado das unidades de milhar
+    CHECK @7              # Compara com 10 para ver se precisa resetar (valor negativo indica não atingiu 10 ainda)
+
+    JLT @.RETURN_FROM_INCREMENT
+
+    LDA @4              # Carrega o valor atual das dezenas de milhar
+    SOMA @6             # Incrementa dezenas de milhar
+    STA @4
+
+    LDA @4              # Carrega o valor atualizado das dezenas de milhar
+    CHECK @7              # Compara com 10 para ver se precisa resetar (valor negativo indica não atingiu 10 ainda)
+
+    JLT @.RETURN_FROM_INCREMENT
+
+    LDA @5              # Carrega o valor atual das centenas de milhar
+    SOMA @6             # Incrementa centenas de milhar
+    STA @5
+
+    LDA @5              # Carrega o valor atualizado das centenas de milhar
+    CHECK @7              # Compara com 10 para ver se precisa resetar (valor negativo indica não atingiu 10 ainda)
+
+    JLT @.RETURN_FROM_INCREMENT
+
+    # Se chegou até aqui, todos os valores foram incrementados tem que permanecer em 9, acender o LEDR8 (LED de Overflow)
+    # e setar a flag de inibir contagem
+
+    LDI $9
+    STA @0
+    STA @1
+    STA @2
+    STA @3
+    STA @4
+    STA @5
+
+    LDI $1
+    STA @258             # Acende LEDR9 para indicar Overflow do contador
+
+    STA @9              # Seta a flag de inibir contagem
+    
+.RETURN_FROM_INCREMENT:
+    RET
+
+.CHECK_LIMIT:
+    JSR @.CHECK_LIMIT_INC  # Se a flag estiver setada, pula para verificar os limites de incremento setados
+
+    LDA @0              # Carrega o valor atualizado das unidades
+    CHECK @7              # Compara com 10 para ver se precisa resetar (valor negativo indica não atingiu 10 ainda)
+    JLT @.MAIN_LOOP     # Se ainda não atingiu 10, volta ao início do loop
+    JSR @.RESET_COUNTER_UN  # Se igual ou maior que 10, pula para resetar
+
+    LDA @1              # Carrega o valor das dezenas
+    CHECK @7              # Compara com 10 para dezenas (ajuste o valor conforme necessário)
+    JLT @.MAIN_LOOP     # Se ainda não atingiu 10 dezenas, volta ao início do loop
+    JSR @.RESET_COUNTER_DEZ # Se igual ou maior que 10, pula para resetar
+
+    LDA @2              # Carrega o valor das centenas
+    CHECK @7              # Compara com 10 para centenas (ajuste o valor conforme necessário)
+    JLT @.MAIN_LOOP     # Se ainda não atingiu 10 centenas, volta ao início do loop
+    JSR @.RESET_COUNTER_CENT # Se igual ou maior que 10, pula para resetar
+
+    LDA @3              # Carrega o valor das unidades de milhar
+    CHECK @7              # Compara com 10 para unidades de milhar (ajuste o valor conforme necessário)
+    JLT @.MAIN_LOOP     # Se ainda não atingiu 10 unidades de milhar, volta ao início do loop
+    JSR @.RESET_COUNTER_UN_MIL # Se igual ou maior que 10, pula para resetar
+
+    LDA @4              # Carrega o valor das dezenas de milhar
+    CHECK @7              # Compara com 10 para dezenas de milhar (ajuste o valor conforme necessário)
+    JLT @.MAIN_LOOP     # Se ainda não atingiu 10 dezenas de milhar, volta ao início do loop
+    JSR @.RESET_COUNTER_DEZ_MIL # Se igual ou maior que 10, pula para resetar
+
+    LDA @5              # Carrega o valor das centenas de milhar
+    CHECK @7              # Compara com 10 para centenas de milhar (ajuste o valor conforme necessário)
+    JLT @.MAIN_LOOP     # Se ainda não atingiu 10 centenas de milhar, volta ao início do loop
+    JSR @.RESET_COUNTER_CENT_MIL # Se igual ou maior que 10, pula para resetar
+
+    JMP @.MAIN_LOOP     # Se chegou até aqui, todos os valores foram resetados e o loop reiniciado
+
+.CHECK_LIMIT_INC:
+    LDA @22             # Carrega o valor da flag de limite setado
+    CHECK @8              # Se a flag não estiver setada, retorna
+    JEQ @.RETURN_FROM_CLI
+
+    # Inicializa a flag para sinalizar que todos os limites foram atingidos
+    LDI $1
+    STA @23             # Flag para verificar se todos os limites foram atingidos
+
+# Verifica se o limite de incremento das centenas de milhar foi atingido
+.CHECK_CENT_MIL:
+    LDA @5
+    CHECK @15
+    JNE @.LIMIT_NOT_REACHED
+    NOP
+
+# Verifica se o limite de incremento das dezenas de milhar foi atingido
+.CHECK_DEZ_MIL:
+    LDA @4
+    CHECK @14
+    JNE @.LIMIT_NOT_REACHED
+    NOP
+
+# Verifica se o limite de incremento das unidades de milhar foi atingido
+.CHECK_UN_MIL:
+    LDA @3
+    CHECK @13
+    JNE @.LIMIT_NOT_REACHED
+    NOP
+
+# Verifica se o limite de incremento das centenas foi atingido
+.CHECK_CENT:
+    LDA @2
+    CHECK @12
+    JNE @.LIMIT_NOT_REACHED
+    NOP
+
+# Verifica se o limite de incremento das dezenas foi atingido
+.CHECK_DEZ:
+    LDA @1
+    CHECK @11
+    JNE @.LIMIT_NOT_REACHED
+    NOP
+
+# Verifica se o limite de incremento das unidades foi atingido
+.CHECK_UN:
+    LDA @0
+    CHECK @10
+    JNE @.LIMIT_NOT_REACHED # Pula se ainda não atingiu o limite
+    NOP                  # Continua para o próximo limite se o limite foi atingido ou excedido
+
+    # Se todos os contadores atingiram seus respectivos limites
+    LDI $1
+    STA @9              # Seta a flag de inibir contagem
+    STA @257            # Acende LEDR8 para indicar que o limite foi atingido
+    RET
+
+.LIMIT_NOT_REACHED:
+    RET
+
+.RETURN_FROM_CLI:
+    RET                 # Retorna para continuar a execução normal
+
+.RESET_COUNTER:
+    JSR @.RESET_COUNTER_UN
+    JSR @.RESET_COUNTER_DEZ
+    JSR @.RESET_COUNTER_CENT
+    JSR @.RESET_COUNTER_UN_MIL
+    JSR @.RESET_COUNTER_DEZ_MIL
+    JSR @.RESET_COUNTER_CENT_MIL
+    JSR @.RESET_LIMITS
+
+    LDI $0
+    STA @258            # Apaga LEDR9 (LED de Overflow)
+    STA @257            # Apaga LEDR8 (LED de **Limite Atingido**)
+    STA @256            # Apaga LEDR0 ~ LEDR7
+    STA @22             # Reseta a flag de limite setado
+    STA @9              # Reseta a flag de inibir contagem
+
+    LDI $1
+    STA @511            # Limpa Leitura KEYS
+
+    JMP @.MAIN_LOOP     # Retorna ao início do loop
+
+.RESET_COUNTER_UN:
+    # Reseta o contador das unidades
+    LDI $0
+    STA @0
+    STA @288
+    RET
+
+.RESET_COUNTER_DEZ:
+    # Reseta o contador das dezenas
+    LDI $0
+    STA @1
+    STA @289
+    RET
+
+.RESET_COUNTER_CENT:
+    # Reseta o contador das centenas
+    LDI $0
+    STA @2
+    STA @290
+    RET
+
+.RESET_COUNTER_UN_MIL:
+    # Reseta o contador das unidades de milhar
+    LDI $0
+    STA @3
+    STA @291
+    RET
+
+.RESET_COUNTER_DEZ_MIL:
+    # Reseta o contador das dezenas de milhar
+    LDI $0
+    STA @4
+    STA @292
+    RET
+
+.RESET_COUNTER_CENT_MIL:   
+    # Reseta o contador das centenas de milhar
+    LDI $0
+    STA @5
+    STA @293
+    RET
+
+.RESET_LIMITS:
+    LDI $0
+    STA @10           # Reseta o limite das unidades
+    STA @11           # Reseta o limite das dezenas
+    STA @12           # Reseta o limite das centenas
+    STA @13           # Reseta o limite das unidades de milhar
+    STA @14           # Reseta o limite das dezenas de milhar
+    STA @15           # Reseta o limite das centenas de milhar
+
+    LDI $0
+    STA @16           # Reseta a flag de limite das unidades
+    STA @17           # Reseta a flag de limite das dezenas
+    STA @18           # Reseta a flag de limite das centenas
+    STA @19           # Reseta a flag de limite das unidades de milhar
+    STA @20           # Reseta a flag de limite das dezenas de milhar
+    STA @21           # Reseta a flag de limite das centenas de milhar
+
+    LDI $0
+    STA @22           # Reseta a flag de limite setado
+
+    RET
+
+.RESET_COUNTER_DEC_UN:
+    # Reseta o contador das unidades
+    LDI $9
+    STA @0
+    STA @288
+    RET
+
+.RESET_COUNTER_DEC_DEZ:
+    # Reseta o contador das dezenas
+    LDI $9
+    STA @1
+    STA @289
+    RET
+
+.RESET_COUNTER_DEC_CENT:
+    # Reseta o contador das centenas
+    LDI $9
+    STA @2
+    STA @290
+    RET
+
+.RESET_COUNTER_DEC_UN_MIL:
+    # Reseta o contador das unidades de milhar
+    LDI $9
+    STA @3
+    STA @291
+    RET
+
+.RESET_COUNTER_DEC_DEZ_MIL:
+    # Reseta o contador das dezenas de milhar
+    LDI $9
+    STA @4
+    STA @292
+    RET
+
+.RESET_COUNTER_DEC_CENT_MIL:
+    # Reseta o contador das centenas de milhar
+    LDI $9
+    STA @5
+    STA @293
+    RET
+
+.SET_LIMIT_UN:
+    LDA @16           # Carrega o valor da flag de limite das unidades
+    CHECK @6            # Se a flag estiver setada, setar limite das dezenas
+    JEQ @.SET_LIMIT_DEZ
+
+    LDA @320          # Carrega o acumulador com a leitura das chaves SW0 até SW7    
+    STA @10           # Salva o valor de SW0 até SW7 em @10
+
+    LDI $1            # Carrega 1 no acumulador
+    STA @16           # Seta a flag de limite das unidades 
+    STA @256          # Acende LEDR0 para indicar que o limite das unidades foi setado
+
+    STA @511            # Limpa Leitura KEYS
+
+    JMP @.MAIN_LOOP   # Retorna ao início do loop
+
+.SET_LIMIT_DEZ:
+    LDA @17           # Carrega o valor da flag de limite das dezenas
+    CHECK @6            # Se a flag estiver setada, setar limite das centenas
+    JEQ @.SET_LIMIT_CENT
+
+    LDA @320          # Carrega o acumulador com a leitura das chaves SW0 até SW7    
+    STA @11           # Salva o valor de SW0 até SW7 em @11
+
+    LDI $1            # Carrega 1 no acumulador
+    STA @17           # Seta a flag de limite das dezenas
+
+    LDI $3            # Carrega 3 no acumulador
+    STA @256          # Acende LEDR0 e LEDR1 para indicar que o limite das dezenas foi setado
+
+    STA @511            # Limpa Leitura KEYS
+
+    JMP @.MAIN_LOOP   # Retorna ao início do loop
+
+.SET_LIMIT_CENT:
+    LDA @18           # Carrega o valor da flag de limite das centenas
+    CHECK @6            # Se a flag estiver setada, setar limite das unidades de milhar
+    JEQ @.SET_LIMIT_UN_MIL
+
+    LDA @320          # Carrega o acumulador com a leitura das chaves SW0 até SW7    
+    STA @12           # Salva o valor de SW0 até SW7 em @12
+
+    LDI $1            # Carrega 1 no acumulador
+    STA @18           # Seta a flag de limite das centenas
+
+    LDI $7            # Carrega 7 no acumulador
+    STA @256          # Acende LEDR0, LEDR1 e LEDR2 para indicar que o limite das centenas foi setado
+
+    STA @511            # Limpa Leitura KEYS
+
+    JMP @.MAIN_LOOP   # Retorna ao início do loop
+
+.SET_LIMIT_UN_MIL:
+    LDA @19           # Carrega o valor da flag de limite das unidades de milhar
+    CHECK @6            # Se a flag estiver setada, setar limite das dezenas de milhar
+    JEQ @.SET_LIMIT_DEZ_MIL
+
+    LDA @320          # Carrega o acumulador com a leitura das chaves SW0 até SW7    
+    STA @13           # Salva o valor de SW0 até SW7 em @13
+
+    LDI $1            # Carrega 1 no acumulador
+    STA @19           # Seta a flag de limite das unidades de milhar
+
+    LDI $15           # Carrega 15 no acumulador
+    STA @256          # Acende LEDR0, LEDR1, LEDR2 e LEDR3 para indicar que o limite das unidades de milhar foi setado
+
+    STA @511            # Limpa Leitura KEYS
+
+    JMP @.MAIN_LOOP   # Retorna ao início do loop
+
+.SET_LIMIT_DEZ_MIL:
+    LDA @20           # Carrega o valor da flag de limite das dezenas de milhar
+    CHECK @6            # Se a flag estiver setada, setar limite das centenas de milhar
+    JEQ @.SET_LIMIT_CENT_MIL
+
+    LDA @320          # Carrega o acumulador com a leitura das chaves SW0 até SW7    
+    STA @14           # Salva o valor de SW0 até SW7 em @14
+
+    LDI $1            # Carrega 1 no acumulador
+    STA @20           # Seta a flag de limite das dezenas de milhar
+
+    LDI $31           # Carrega 31 no acumulador
+    STA @256          # Acende LEDR0, LEDR1, LEDR2, LEDR3 e LEDR4 para indicar que o limite das dezenas de milhar foi setado
+
+    STA @511            # Limpa Leitura KEYS
+
+    JMP @.MAIN_LOOP   # Retorna ao início do loop
+
+.SET_LIMIT_CENT_MIL:
+    LDA @21           # Carrega o valor da flag de limite das centenas de milhar
+    CHECK @6            # Se a flag estiver setada, volar para o loop principal
+    STA @511            # Limpa Leitura KEYS
+    JEQ @.MAIN_LOOP
+
+    LDA @320          # Carrega o acumulador com a leitura das chaves SW0 até SW7    
+    STA @15           # Salva o valor de SW0 até SW7 em @15
+
+    LDI $1            # Carrega 1 no acumulador
+    STA @21           # Seta a flag de limite das centenas de milhar
+
+    LDI $63           # Carrega 63 no acumulador
+    STA @256          # Acende LEDR0, LEDR1, LEDR2, LEDR3, LEDR4 e LEDR5 para indicar que o limite das centenas de milhar foi setado
+
+    LDI $1            # Carrega 1 no acumulador
+    STA @22           # Seta a flag de limite setado
+
+    JMP @.MAIN_LOOP   # Retorna ao início do loop
+
+.DEC_LIMIT_OVERFLOW:
+    LDA @9              # Carrega o valor da flag de inibir contagem
+    CHECK @8              # Se a flag não estiver setada, vai para o label DECREMENT direto
+    JEQ @.DECREMENT
+
+    # Se estiver, faz tratamento dos leds e flag de inibir contagem para decrementar o contador
+
+    LDI $0
+    STA @258            # Apaga LEDR9 (LED de Overflow)
+    STA @257            # Apaga LEDR8 (LED de **Limite Atingido**)
+    STA @9              # Reseta a flag de inibir contagem
+
+.DECREMENT:
+    LDI $1
+    STA @511            # Limpa Leitura KEYS
+
+    LDA @0              # Carrega o valor atual das unidades
+    SUB @6             # Decrementa o valor
+    STA @0              # Salva o valor incrementado
+
+    LDA @8              # Carrega o valor 0
+    CHECK @0            # Compara com o valor das unidades (valor negativo indica que não atingiu 0 ainda)
+
+    JLT @.CHECK_DEC_LIMIT
+
+    LDA @1              # Carrega o valor atual das dezenas
+    SUB @6             # Decrementa dezenas
+    STA @1
+
+    LDA @8              # Carrega o valor 0
+    CHECK @1            # Compara com o valor das dezenas (valor negativo indica que não atingiu 0 ainda)
+
+    JLT @.CHECK_DEC_LIMIT
+
+    LDA @2              # Carrega o valor atual das centenas
+    SUB @6             # Decrementa centenas
+    STA @2
+
+    LDA @8              # Carrega o valor 0
+    CHECK @2            # Compara com o valor das centenas (valor negativo indica que não atingiu 0 ainda)
+
+    JLT @.CHECK_DEC_LIMIT
+
+    LDA @3              # Carrega o valor atual das unidades de milhar
+    SUB @6             # Decrementa unidades de milhar
+    STA @3
+
+    LDA @8              # Carrega o valor 0
+    CHECK @3            # Compara com o valor das unidades de milhar (valor negativo indica que não atingiu 0 ainda)
+
+    JLT @.CHECK_DEC_LIMIT
+
+    LDA @4              # Carrega o valor atual das dezenas de milhar
+    SUB @6             # Decrementa dezenas de milhar
+    STA @4
+
+    LDA @8              # Carrega o valor 0
+    CHECK @4            # Compara com o valor das dezenas de milhar (valor negativo indica que não atingiu 0 ainda)
+
+    JLT @.CHECK_DEC_LIMIT
+
+    LDA @5              # Carrega o valor atual das centenas de milhar
+    SUB @6             # Decrementa centenas de milhar
+    STA @5
+
+    LDA @8              # Carrega o valor 0
+    CHECK @5            # Compara com o valor das centenas de milhar (valor negativo indica que não atingiu 0 ainda)
+
+    JLT @.CHECK_DEC_LIMIT
+
+    # Se chegou até aqui, todos os valores foram decrementados tem que permanecer em 0
+
+    LDI $0
+    STA @0
+    STA @1
+    STA @2
+    STA @3
+    STA @4
+    STA @5
+
+.CHECK_DEC_LIMIT:
+    JSR @.DISPLAY_VALUES # Mostra valores nas saídas
+
+    LDA @8              # Carrega o valor 0 
+    CHECK @0            # Compara com o valor das unidades (valor negativo indica que não atingiu 0 ainda)
+    JLT @.MAIN_LOOP     # Se ainda não atingiu 0, volta ao início do loop   
+    JSR @.RESET_COUNTER_DEC_UN  # Se igual ou menor que 0, pula para resetar
+
+    LDA @8              # Carrega o valor 0
+    CHECK @1            # Compara com o valor das dezenas (valor negativo indica que não atingiu 0 ainda)
+    JLT @.MAIN_LOOP     # Se ainda não atingiu 0 dezenas, volta ao início do loop
+    JSR @.RESET_COUNTER_DEC_DEZ # Se igual ou menor que 0, pula para resetar
+
+    LDA @8              # Carrega o valor 0
+    CHECK @2            # Compara com o valor das centenas (valor negativo indica que não atingiu 0 ainda)
+    JLT @.MAIN_LOOP     # Se ainda não atingiu 0 centenas, volta ao início do loop
+    JSR @.RESET_COUNTER_DEC_CENT # Se igual ou menor que 0, pula para resetar
+
+    LDA @8              # Carrega o valor 0
+    CHECK @3            # Compara com o valor das unidades de milhar (valor negativo indica que não atingiu 0 ainda)
+    JLT @.MAIN_LOOP     # Se ainda não atingiu 0 unidades de milhar, volta ao início do loop
+    JSR @.RESET_COUNTER_DEC_UN_MIL # Se igual ou menor que 0, pula para resetar
+
+    LDA @8              # Carrega o valor 0
+    CHECK @4            # Compara com o valor das dezenas de milhar (valor negativo indica que não atingiu 0 ainda)
+    JLT @.MAIN_LOOP     # Se ainda não atingiu 0 dezenas de milhar, volta ao início do loop
+    JSR @.RESET_COUNTER_DEC_DEZ_MIL # Se igual ou menor que 0, pula para resetar
+
+    LDA @8              # Carrega o valor 0
+    CHECK @5            # Compara com o valor das centenas de milhar (valor negativo indica que não atingiu 0 ainda)
+    JLT @.MAIN_LOOP     # Se ainda não atingiu 0 centenas de milhar, volta ao início do loop
+    JSR @.RESET_COUNTER_DEC_CENT_MIL # Se igual ou menor que 0, pula para resetar
+
+    JMP @.MAIN_LOOP     # Se chegou até aqui, todos os valores foram resetados e o loop reiniciado
+
+
+
+    

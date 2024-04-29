@@ -1,0 +1,561 @@
+# Assembly para o projeto 1 do relógio de Design de Computadores
+
+# Inicialização da FPGA e Variáveis
+
+.SETUP:
+    LDI R0 $0     # Inicializa R0 com 0
+    LDI R1 $1     # Inicializa R1 com 1
+    LDI R2 $10    # Inicializa R2 com 10
+    LDI R3 $6     # Inicializa R3 com 60
+    LDI R4 $2     # Inicializa R4 com 2
+    LDI R5 $4     # Inicializa R5 com 4
+    LDI R6 $128   # Inicializa R6 com 128
+    LDI R7 $3     # Inicializa R7 com 3
+
+    # Zerando os displays de 7 segmentos
+    
+    STA R0 @288   # 0 -> HEX0
+    STA R0 @289   # 0 -> HEX1
+    STA R0 @290   # 0 -> HEX2
+    STA R0 @291   # 0 -> HEX3
+    STA R0 @292   # 0 -> HEX4
+    STA R0 @293   # 0 -> HEX5
+
+    # Apagando os LEDs
+
+    STA R0 @256   # 0 -> LEDR0 ~ LEDR7
+    STA R0 @257   # 0 -> LEDR8
+    STA R0 @258   # 0 -> LEDR9
+
+    # Inicializando as variáveis de contagem
+
+    STA R0 @0     # 0 -> Valor das unidades dos segundos
+    STA R0 @1     # 0 -> Valor das dezenas dos segundos
+    STA R0 @2     # 0 -> Valor das unidades dos minutos
+    STA R0 @3     # 0 -> Valor das dezenas dos minutos
+    STA R0 @4     # 0 -> Valor das unidades das horas
+    STA R0 @5     # 0 -> Valor das dezenas das horas
+
+    # Salvando o valor 0 na posição 6 da memória para verificar ticks de 1 segundo,
+    # e auxílio na contagem de tempo
+
+    STA R0 @6
+
+    # Salvando o valor 1 na posição 7 da memória para uso no incremento de tempo, auxílio na contagem de horas
+    # e como máscara AND 
+
+    STA R1 @7
+
+    # Salvando o valor 10 na posição 8 da memória para auxílio na contagem de tempo
+
+    STA R2 @8
+
+    # Salvando o valor 6 na posição 9 da memória para auxílio na contagem de segundos
+    # e minutos
+
+    STA R3 @9
+
+    # Salvando o valor 2 e 4 nas posições 10 e 11 da memória para auxílio na contagem de horas
+
+    STA R4 @10
+    STA R5 @11
+
+    # Salvando o valor 128 na posição 13 da memória para caso for implementar AM e PM
+
+    STA R6 @12
+
+    # Salvando o valor 3 na posição 14 da memória para auxílio na contagem de horas
+
+    STA R7 @13
+
+    # Flag de AM e PM já setado uma vez
+
+    STA R0 @14
+
+    # Salvando o valor 12 na posição 15 da memória para auxiliar a lógica de AM e PM
+
+    LDI R6 $12
+    STA R6 @15
+
+    # Salvando flags de ajuste de tempo
+
+    STA R0 @16   # 0 -> Flag de ajuste das unidades dos segundos
+    STA R0 @17   # 0 -> Flag de ajuste das dezenas dos segundos
+    STA R0 @18   # 0 -> Flag de ajuste das unidades dos minutos
+    STA R0 @19   # 0 -> Flag de ajuste das dezenas dos minutos
+    STA R0 @20   # 0 -> Flag de ajuste das unidades das horas
+    STA R0 @21   # 0 -> Flag de ajuste das dezenas das horas
+
+    # Reservando dois endereços de memória para horas em AM e PM
+
+    STA R0 @22     # 0 -> Valor das unidades das horas em AM e PM
+    STA R0 @23     # 0 -> Valor das dezenas das horas em AM e PM
+
+    # Diferença entre 12 e as horas, ou, as horas e 12
+
+    STA R0 @24
+
+    # Multiplicador (quantidade de vezes somadas)
+
+    STA R0 @25
+
+    # Junta as dezenas e unidades das horas
+
+    STA R0 @26
+
+    # Flag de AM e PM (0 -> AM, 1 -> PM)
+
+    STA R0 @27
+
+    # Flags que auxiliam leitura do Time Counter
+
+    STA R0 @28
+    STA R1 @29
+
+    # Fazendo o reset dos flip flops das Keys e do Contador de tempo
+    
+    STA @511            # Limpa Leitura do Key 0
+    STA @510            # Limpa Leitura do Key 1
+    STA @509            # Limpa Leitura do Key 2
+    STA @508            # Limpa Leitura do Key 3
+    STA @507            # Limpa Leitura do Time Counter        
+
+.MAIN_LOOP1: 
+    LDA R6 @356           # Carrega o valor do Time Counter para R6
+    ANDI R6 @7
+    CHECK R6 @7            # Verifica se o Time Counter é igual a 0
+    JNE @.MAIN_LOOP1        # Se for igual a 0, continua no loop
+
+    STA R0 @507           # Limpa Leitura do Time Counter
+
+    JSR @.INCREMENT_TIME  # Subrotina para incrementar o tempo
+
+    JSR @.DISPLAY_24H     # Subrotina para exibir o tempo
+
+    #JSR @.DEBUG1           # Subrotina para debug
+    
+    STA R1 @507           # Limpa Leitura do Time Counter
+
+.MAIN_LOOP2:
+    LDA R6 @356           # Carrega o valor do Time Counter para R6
+    ANDI R6 @7
+    CHECK R6 @7           # Verifica se o Time Counter é igual a 0
+    JNE @.MAIN_LOOP2            # Se for igual a 0, continua no loop
+
+    STA R0 @507           # Limpa Leitura do Time Counter
+
+    JSR @.INCREMENT_TIME  # Subrotina para incrementar o tempo
+
+    JSR @.DISPLAY_24H     # Subrotina para exibir o tempo
+
+    #JSR @.DEBUG2 
+
+    JMP @.MAIN_LOOP1
+
+.INCREMENT_TIME:
+    # Incrementa o tempo
+
+    LDA R7 @0             # Carrega o valor das unidades dos segundos para R7
+    SOMA R7 @7            # Incrementa o valor das unidades dos segundos
+    STA R7 @0             # Salva o valor das unidades dos segundos
+
+    LDA R7 @0             # Carrega o valor das unidades dos segundos para R7
+    CHECK R7 @8           # Verifica se o valor das unidades dos segundos é igual a 10
+    JNE @.RETURN          # Se não for, retorna
+
+    # Reset das unidades dos segundos 
+
+    STA R0 @0             # 0 -> Valor das unidades dos segundos
+
+    LDA R7 @1             # Carrega o valor das dezenas dos segundos para R7
+    SOMA R7 @7            # Incrementa o valor das dezenas dos segundos
+    STA R7 @1             # Salva o valor das dezenas dos segundos
+
+    LDA R7 @1             # Carrega o valor das dezenas dos segundos para R7
+    CHECK R7 @9           # Verifica se o valor das dezenas dos segundos é igual a 6
+    JNE @.RETURN          # Se não for, retorna
+
+    # Reset das dezenas dos segundos
+
+    STA R0 @1             # 0 -> Valor das dezenas dos segundos
+
+    LDA R7 @2             # Carrega o valor das unidades dos minutos para R7
+    SOMA R7 @7            # Incrementa o valor das unidades dos minutos
+    STA R7 @2             # Salva o valor das unidades dos minutos
+
+    LDA R7 @2             # Carrega o valor das unidades dos minutos para R7
+    CHECK R7 @8           # Verifica se o valor das unidades dos minutos é igual a 10
+    JNE @.RETURN          # Se não for, retorna
+
+    # Reset das unidades dos minutos
+
+    STA R0 @2             # 0 -> Valor das unidades dos minutos
+
+    LDA R7 @3             # Carrega o valor das dezenas dos minutos para R7
+    SOMA R7 @7            # Incrementa o valor das dezenas dos minutos
+    STA R7 @3             # Salva o valor das dezenas dos minutos
+
+    LDA R7 @3             # Carrega o valor das dezenas dos minutos para R7
+    CHECK R7 @9           # Verifica se o valor das dezenas dos minutos é igual a 6
+    JNE @.RETURN          # Se não for, retorna
+
+    # Reset das dezenas dos minutos
+
+    STA R0 @3             # 0 -> Valor das dezenas dos minutos
+
+    # Verifica se é AM/PM ou 24 horas
+
+    LDA R2 @320           # Carrega o valor dos SW0 ~ SW7 para R2
+    ANDI R2 @12           # Verifica se o bit 7 está setado
+    CHECK R2 @12          # Se estiver setado, é AM e PM
+    JEQ @.AM_PM_FT        # E pula para a label AM_PM
+
+    # Se o usuário desativar a flag de AM e PM, o relógio se reajusta para 24 horas
+    JSR @.FIX_HOUR        # Se estiver setada, pula para a label FIX_HOUR    
+
+    JSR @.HOURS      # Se não for, pula para a label HOUR_LT_20
+
+    # Se for, usa o limite 4 para as unidades das horas
+
+    JMP @.RETURN          # Retorna
+
+.HOURS:
+    LDA R7 @5             # Carrega o valor das dezenas das horas para R7
+    CHECK R7 @10          # Verifica se o valor das dezenas dos minutos é igual a 2
+    JEQ @.HOUR_GT_20
+
+    # Se o valor das dezenas das horas for menor que 2, usa o limite 9 para as unidades das horas
+
+    LDA R7 @4             # Carrega o valor das unidades das horas para R7
+    SOMA R7 @7            # Incrementa o valor das unidades das horas
+    STA R7 @4             # Salva o valor das unidades das horas
+
+    LDA R7 @4             # Carrega o valor das unidades das horas para R7
+    CHECK R7 @8           # Verifica se o valor das unidades das horas é igual a 10
+    JNE @.RETURN          # Se não for, retorna
+
+    # Reset das unidades das horas
+
+    STA R0 @4             # 0 -> Valor das unidades das horas
+
+    # Incrementa o valor das dezenas das horas
+
+    LDA R7 @5             # Carrega o valor das dezenas das horas para R7
+    SOMA R7 @7            # Incrementa o valor das dezenas das horas
+    STA R7 @5             # Salva o valor das dezenas das horas
+
+    RET
+
+.HOUR_GT_20:
+    # Se o valor das dezenas das horas for maior que 2, usa o limite 3 para as unidades das horas
+
+    LDA R7 @4             # Carrega o valor das unidades das horas para R7
+    SOMA R7 @7            # Incrementa o valor das unidades das horas
+    STA R7 @4             # Salva o valor das unidades das horas
+
+    LDA R7 @4             # Carrega o valor das unidades das horas para R7
+    CHECK R7 @11           # Verifica se o valor das unidades das horas é igual a 4
+    JNE @.RETURN          # Se não for, retorna
+
+    # Reset das unidades das horas
+
+    STA R0 @4             # 0 -> Valor das unidades das horas
+
+    LDA R7 @5             # Carrega o valor das dezenas das horas para R7
+    SOMA R7 @7            # Incrementa o valor das dezenas das horas
+    STA R7 @5             # Salva o valor das dezenas das horas
+
+    LDA R7 @5             # Carrega o valor das dezenas das horas para R7
+    CHECK R7 @13          # Verifica se o valor das dezenas das horas é igual a 3
+    JNE @.RETURN          # Se não for, retorna
+
+    # Reset das dezenas das horas
+
+    STA R0 @5             # 0 -> Valor das dezenas das horas
+
+    RET
+
+.DISPLAY_24H:
+    # Verifica se o AM e PM está setado
+
+    LDA R3 @14            # Carrega o valor da flag de AM e PM para R3
+    CHECK R3 @6           # Verifica se a flag de AM e PM está setada
+    JEQ @.DISPLAY_AM_PM   # Se estiver setada, pula para a label DISPLAY_AM_PM
+
+    LDA R7 @5             # Carrega o valor das dezenas das horas para R7
+    STA R7 @293           # Salva o valor das dezenas das horas em HEX5
+
+    LDA R7 @4             # Carrega o valor das unidades das horas para R7
+    STA R7 @292           # Salva o valor das unidades das horas em HEX4
+
+    LDA R7 @3             # Carrega o valor das dezenas dos minutos para R7
+    STA R7 @291           # Salva o valor das dezenas dos minutos em HEX3
+
+    LDA R7 @2             # Carrega o valor das unidades dos minutos para R7
+    STA R7 @290           # Salva o valor das unidades dos minutos em HEX2
+
+    LDA R7 @1             # Carrega o valor das dezenas dos segundos para R7
+    STA R7 @289           # Salva o valor das dezenas dos segundos em HEX1
+
+    LDA R7 @0             # Carrega o valor das unidades dos segundos para R7
+    STA R7 @288           # Salva o valor das unidades dos segundos em HEX0
+
+    RET
+
+.RETURN:
+    RET 
+
+.DEBUG1:
+    LDI R3 $63
+
+    STA R3 @256            
+
+    RET 
+
+.DEBUG2:
+    LDI R3 $0
+
+    STA R3 @256            
+
+    RET
+
+.AM_PM_FT:
+    LDA R3 @14            # Carrega o valor da flag de AM e PM para R7
+    CHECK R3 @7           # Verifica se a flag de AM e PM está setada
+    JEQ @.AM_PM_COUNTER   # Se não estiver setada, pula para a label AM_PM_COUNTER direto
+
+    # Verificar se as horas são menores (AM) ou maiores (PM) que 12
+
+    # Se for maior que 12, decrementa 12 horas
+    # Se for menor que 12, incrementa 12 horas
+
+    STA R0 @25              # 0 -> Reseta o Multiplicador (quantidade de vezes somadas)
+
+    JSR @.JOIN_DHOURS        # Subrotina que junta as dezenas e unidades das horas e salva em @26
+
+    JSR @.HOURS_DIFF1       # Subrotina que salva em @24 a diferença entre 12 e o valor das horas
+
+    # Verifica se as horas são menores que 12
+
+    LDA R2 @24             # Carrega o valor da diferença entre 12 e as horas para R2
+    CHECK R2 @15           # Verifica se o valor das horas é menor que 12
+
+    # Se for menor que 12, incrementa 12 horas
+
+    # Se for menor ou igual a 12, pula para a label AM
+    JLT @.AM      
+    JEQ @.AM      
+
+    # Se for maior que 12, decrementa 12 horas
+
+    JSR @.HOURS_DIFF2       # Subrotina que salva em @24 a diferença entre o valor das horas e 12
+
+    JMP @.PM                # Se for menor que 10, pula para a label PM
+
+.JOIN_DHOURS:
+    # Subrotina que junta as dezenas e unidades das horas e salva em @26
+
+    LDA R5 @25             # Carrega a quantidade de vezes já somadas 
+    CHECK R5 @8            # Verifica se a quantidade de vezes já somadas é igual a 10
+    JEQ @.JOIN_UHOURS      # Se for igual a 10, pula para a label JOIN_UHOURS
+
+    LDA R7 @4              # Carrega o valor das dezenas das horas para R7
+    SOMA R7 @4             
+    STA R7 @26             # Salva o valor das dezenas das horas
+
+    LDA R6 @25             # Carrega a quantidade de vezes já somadas para R6
+    SOMA R6 @7             # Incrementa a quantidade de vezes já somadas
+    STA R6 @25             # Salva a quantidade de vezes já somadas
+
+    JMP @.JOIN_DHOURS      # Loop até somar 10 vezes
+
+.JOIN_UHOURS:
+    LDA R7 @5              # Carrega o valor das unidades das horas para R7
+    SOMA R7 @26           
+    STA R7 @26             # Salva o valor das dezenas e unidades das horas
+
+    RET
+
+.HOURS_DIFF1:
+    # Subrotina que salva em @24 a diferença entre 12 e o valor das horas
+
+    LDA R7 @15             # Carrega o valor 12 para R7
+    SUB R7 @26             # Subtrai o valor das horas de 12
+    STA R7 @24             # Salva a diferença entre 12 e o valor das horas
+
+    RET
+
+.HOURS_DIFF2:
+    # Subrotina que salva em @24 a diferença entre o valor das horas e 12
+
+    LDA R7 @26             # Carrega o valor das horas para R7
+    SUB R7 @15             # Subtrai 12 do valor das horas
+    STA R7 @24             # Salva a diferença entre o valor das horas e 12
+
+    RET
+
+.AM:
+    # Se for menor que 12, incrementa 12 horas
+
+    JSR @.KEEP_HOURS      # Subrotina que incrementa 12 horas e salva o resultado em @22 e @23
+
+    STA R1 @258             # Indicador de AM
+
+    STA R1 @27              # 1 -> Flag de AM 
+
+    JMP @.AM_PM_COUNTER     # Pula para a label AM_PM_COUNTER
+
+.PM:
+    # Se for maior que 12, decrementa 12 horas
+
+    JSR @.DEC_12_HOURS      # Subrotina que decrementa 12 horas e salva o resultado em @22 e @23
+
+    STA R0 @258             # Indicador de PM
+
+    STA R0 @27              # 0 -> Flag de PM
+
+    JMP @.AM_PM_COUNTER     # Pula para a label AM_PM_COUNTER
+
+.KEEP_HOURS:
+    # Mantém só copia os valores de @5 e @4 para @23 e @22, já que as horas são menores que 12
+    #, portanto, já estão no modelo correto para AM 
+
+    LDA R7 @5              # Carrega o valor das dezenas das horas para R7
+    STA R7 @23             # Salva o valor das dezenas das horas
+
+    LDA R7 @4              # Carrega o valor das unidades das horas para R7
+    STA R7 @22             # Salva o valor das unidades das horas
+
+    RET
+
+.DEC_12_HOURS:
+    # Subrotina que decrementa 12 horas e salva o resultado em @22 e @23
+
+    LDA R7 @4              # Carrega o valor das dezenas das horas para R7
+    SUB R7 @7              # Subtrai 1 do valor das dezenas das horas
+    STA R7 @23             # Salva o valor das dezenas das horas
+
+    LDA R7 @5              # Carrega o valor das unidades das horas para R7
+    SUB R7 @10             # Subtrai 2 do valor das unidades das horas
+    STA R7 @22             # Salva o valor das unidades das horas
+
+    RET     
+
+.INC_12_HOURS:
+    # Subrotina que incrementa 12 horas e salva o resultado em @5 e @4
+
+    LDA R7 @5              # Carrega o valor das dezenas das horas para R7
+    SOMA R7 @7             # Soma 1 ao valor das dezenas das horas
+    STA R7 @5             # Salva o valor das dezenas das horas
+
+    LDA R7 @4              # Carrega o valor das unidades das horas para R7
+    SOMA R7 @10            # Soma 2 ao valor das unidades das horas
+    STA R7 @4             # Salva o valor das unidades das horas
+
+    RET
+
+.AM_PM_COUNTER:
+    # Subrotina que incrementa o relógio AM e PM
+
+    LDA R7 @22             # Carrega o valor das unidades das horas para R7
+    SOMA R7 @7            # Incrementa o valor das unidades das horas
+    STA R7 @22             # Salva o valor das unidades das horas
+
+    LDA R7 @22             # Carrega o valor das unidades das horas para R7
+    CHECK R7 @10           # Verifica se o valor das unidades das horas é igual a 2
+    JEQ @.CHANGE          # Se for, pula para a label CHANGE usada para verificar se é necessário trocar de AM para PM, ou, PM para AM
+
+    LDA R7 @22             # Carrega o valor das unidades das horas para R7
+    CHECK R7 @8           # Verifica se o valor das unidades das horas é igual a 10
+    JNE @.RETURN          # Se não for, Retorna
+
+    # Reset das unidades das horas
+
+    JSR @.DEBUG1
+
+    STA R0 @4             # 0 -> Valor das unidades das horas
+    STA R0 @22            # 0 -> Valor das unidades das horas em AM e PM
+
+.CHANGE:
+    LDA R7 @23             # Carrega o valor das dezenas das horas para R7
+    SOMA R7 @7            # Incrementa o valor das dezenas das horas
+    STA R7 @23             # Salva o valor das dezenas das horas
+
+    LDA R7 @23             # Carrega o valor das dezenas das horas para R7
+    CHECK R7 @7           # Verifica se o valor das dezenas das horas é igual a 1
+    JNE @.RETURN          # Se não for, Retorna
+
+    # Reset das dezenas das horas
+
+    # STA R0 @5             # 0 -> Valor das dezenas das horas
+    STA R0 @23            # 0 -> Valor das dezenas das horas em AM e PM
+
+    # Se for PM, troca para AM e, se for AM, troca para PM
+
+    LDA R7 @27            # flag de AM ou PM
+    CHECK R7 @1           # Verifica se é AM ou PM
+    JEQ @.AM_2_PM         
+
+    JMP @.PM_2_AM         
+
+    JMP @.RETURN          # Retorna
+
+.AM_2_PM:
+    STA R1 @27            # 1 -> Flag de AM ou PM
+
+    RET
+
+.PM_2_AM:
+    STA R0 @27            # 0 -> Flag de AM ou PM
+
+    RET
+
+.FIX_HOUR:
+    LDA R3 @14            # Carrega o valor da flag de AM e PM para R3
+    STA R3 @256           # Valor da flag de AM e PM em LED0 ~ LED7  
+    CHECK R3 @6           # Verifica se a flag de AM e PM está setada
+    JEQ @.RETURN          # Se não estiver setada, retorna
+
+    STA R0 @14            # 0 -> Flag de AM e PM já setado uma vez
+    STA R0 @27            # 0 -> Flag de AM ou PM
+    STA R0 @258           # 0 -> Indicador de AM ou PM
+
+    # Se estiver setada, verifica se é AM ou PM
+
+    LDA R3 @27            # Carrega o valor da flag de AM e PM para R3
+    CHECK R3 @6           # Verifica se é AM ou PM
+    JEQ @.FIX_PM          # Se for PM, pula para a label FIX_PM
+
+    # Se for AM, não precisa fazer nada
+
+    RET
+
+.FIX_PM:
+    # Se for PM, incrementa 12 horas
+
+    JSR @.INC_12_HOURS    # Subrotina que incrementa 12 horas e salva o resultado em @5 (dezenas) e @4 (unidades)
+
+    RET
+
+.DISPLAY_AM_PM:
+    # Se o AM e PM estiver setado, exibe as horas em AM e PM
+
+    LDA R7 @23            # Carrega o valor das dezenas das horas em AM e PM para R7
+    STA R7 @293           # Salva o valor das dezenas das horas em HEX5
+
+    LDA R7 @22            # Carrega o valor das unidades das horas em AM e PM para R7
+    STA R7 @292           # Salva o valor das unidades das horas em HEX4
+
+    LDA R7 @3             # Carrega o valor das dezenas dos minutos para R7
+    STA R7 @291           # Salva o valor das dezenas dos minutos em HEX3
+
+    LDA R7 @2             # Carrega o valor das unidades dos minutos para R7
+    STA R7 @290           # Salva o valor das unidades dos minutos em HEX2
+
+    LDA R7 @1             # Carrega o valor das dezenas dos segundos para R7
+    STA R7 @289           # Salva o valor das dezenas dos segundos em HEX1
+
+    LDA R7 @0             # Carrega o valor das unidades dos segundos para R7
+    STA R7 @288           # Salva o valor das unidades dos segundos em HEX0
+
+    RET

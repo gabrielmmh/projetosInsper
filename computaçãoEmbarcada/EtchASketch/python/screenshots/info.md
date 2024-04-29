@@ -1,0 +1,1 @@
+serão salvas aqui as screenshots do botão preto

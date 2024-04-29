@@ -1,0 +1,1067 @@
+# Assembly para o projeto 1 do relógio de Design de Computadores
+
+# Inicialização da FPGA e Variáveis
+
+.SETUP:
+    LDI R0 $0     # Inicializa R0 com 0
+    LDI R1 $1     # Inicializa R1 com 1
+    LDI R2 $10    # Inicializa R2 com 10
+    LDI R3 $6     # Inicializa R3 com 60
+    LDI R4 $2     # Inicializa R4 com 2
+    LDI R5 $4     # Inicializa R5 com 4
+    LDI R6 $128   # Inicializa R6 com 128
+    LDI R7 $3     # Inicializa R7 com 3
+
+    # Zerando os displays de 7 segmentos
+    
+    STA R0 @288   # 0 -> HEX0
+    STA R0 @289   # 0 -> HEX1
+    STA R0 @290   # 0 -> HEX2
+    STA R0 @291   # 0 -> HEX3
+    STA R0 @292   # 0 -> HEX4
+    STA R0 @293   # 0 -> HEX5
+
+    # Apagando os LEDs
+
+    STA R0 @256   # 0 -> LEDR0 ~ LEDR7
+    STA R0 @257   # 0 -> LEDR8
+    STA R0 @258   # 0 -> LEDR9
+
+    # Inicializando as variáveis de contagem
+
+    STA R0 @0     # 0 -> Valor das unidades dos segundos
+    STA R0 @1     # 0 -> Valor das dezenas dos segundos
+    STA R0 @2     # 0 -> Valor das unidades dos minutos
+    STA R0 @3     # 0 -> Valor das dezenas dos minutos
+    STA R0 @4     # 0 -> Valor das unidades das horas
+    STA R0 @5     # 0 -> Valor das dezenas das horas
+
+    # Salvando o valor 0 na posição 6 da memória para verificar ticks de 1 segundo,
+    # e auxílio na contagem de tempo
+
+    STA R0 @6
+
+    # Salvando o valor 1 na posição 7 da memória para uso no incremento de tempo, auxílio na contagem de horas
+    # e como máscara AND 
+
+    STA R1 @7
+
+    # Salvando o valor 10 na posição 8 da memória para auxílio na contagem de tempo
+
+    STA R2 @8
+
+    # Salvando o valor 6 na posição 9 da memória para auxílio na contagem de segundos
+    # e minutos
+
+    STA R3 @9
+
+    # Salvando o valor 2 e 4 nas posições 10 e 11 da memória para auxílio na contagem de horas
+
+    STA R4 @10
+    STA R5 @11
+
+    # Salvando o valor 128 na posição 12 da memória para modo de setar alarme
+
+    STA R6 @12
+
+    # Salvando o valor 3 na posição 13 da memória para auxílio na contagem de horas
+
+    STA R7 @13
+
+    # Flag de alarme setado
+
+    STA R0 @14
+
+    # Endereços para salvar os valores do alarme
+
+    STA R0 @15   # 0 -> Novo valor das unidades dos segundos do alarme
+    STA R0 @16   # 0 -> Novo valor das dezenas dos segundos do alarme
+    STA R0 @17   # 0 -> Novo valor das unidades dos minutos do alarme
+    STA R0 @18   # 0 -> Novo valor das dezenas dos minutos do alarme
+    STA R0 @19   # 0 -> Novo valor das unidades das horas do alarme
+    STA R0 @20   # 0 -> Novo valor das dezenas das horas do alarme
+
+    # Endereços para salvar os valores do timer
+
+    STA R0 @21   # 0 -> Novo valor das unidades dos segundos
+    STA R0 @22   # 0 -> Novo valor das dezenas dos segundos
+    STA R0 @23   # 0 -> Novo valor das unidades dos minutos
+    STA R0 @24   # 0 -> Novo valor das dezenas dos minutos
+    STA R0 @25   # 0 -> Novo valor das unidades das horas
+    STA R0 @26   # 0 -> Novo valor das dezenas das horas
+
+    # Flag do timer setado
+
+    STA R0 @27   # 0 -> Flag timer
+
+    # Salvando flags de apoio para o timer
+
+    STA R0 @28   # 0 -> Flag de ajuste das unidades dos segundos do timer
+    STA R0 @29   # 0 -> Flag de ajuste das dezenas dos segundos do timer
+    STA R0 @30   # 0 -> Flag de ajuste das unidades dos minutos do timer
+    STA R0 @31   # 0 -> Flag de ajuste das dezenas dos minutos do timer
+    STA R0 @32   # 0 -> Flag de ajuste das unidades das horas do timer
+    STA R0 @33   # 0 -> Flag de ajuste das dezenas (>= 2) das horas do timer
+    STA R0 @34   # 0 -> Flag de ajuste das dezenas (< 2) das horas do timer
+
+    # Salvando o valor -1 na posição 35 da memória para decremento do timer
+
+    LDI R3 $255
+    STA R3 @35
+
+    # Flag de timer finalizado
+
+    STA R0 @36   # 0 -> Flag de timer finalizado
+
+    # Salvando flags de apoio para o alarme
+
+    STA R0 @37   # 0 -> Flag de ajuste das unidades dos segundos do alarme
+    STA R0 @38   # 0 -> Flag de ajuste das dezenas dos segundos do alarme
+    STA R0 @39   # 0 -> Flag de ajuste das unidades dos minutos do alarme
+    STA R0 @40   # 0 -> Flag de ajuste das dezenas dos minutos do alarme
+    STA R0 @41   # 0 -> Flag de ajuste das unidades das horas do alarme
+    STA R0 @42   # 0 -> Flag de ajuste das dezenas (>= 2) das horas do alarme
+    STA R0 @43   # 0 -> Flag de ajuste das dezenas (< 2) das horas do alarme
+
+    # Flag de chegou no horário do alarme
+
+    STA R0 @44   # 0 -> Flag de chegou no horário do alarme
+
+    # Salvando o valor 15 na posição 45 da memória para máscara de bits AND do alarme
+
+    LDI R3 $15
+    STA R3 @45
+
+    # Salvando o valor 64 na posição 46 da memória para máscara de bits AND que auxilia a mostrar o timer ou o relógio
+
+    LDI R3 $64
+    STA R3 @46
+
+    # Fazendo o reset dos flip flops das Keys e do Contador de tempo
+    
+    STA @511            # Limpa Leitura do Key 0
+    STA @510            # Limpa Leitura do Key 1
+    STA @509            # Limpa Leitura do Key 2
+    STA @508            # Limpa Leitura do Key 3
+    STA @507            # Limpa Leitura do Time Counter        
+
+.MAIN_LOOP: 
+    JSR @.SET_TIMER      # Subrotina para setar o timer
+
+    JSR @.SET_ALARM      # Subrotina para setar o alarme
+
+    JSR @.ADJUST_HOURS   # Subrotina para ajustar as horas
+
+    JSR @.ADJUST_MINUTES # Subrotina para ajustar os minutos
+
+    JSR @.ADJUST_SECONDS # Subrotina para ajustar os segundos
+
+    JSR @.CHECK_ALARM    # Subrotina para verificar se o alarme foi atingido
+    
+    JSR @.DISPLAY     # Subrotina para exibir o tempo
+
+    LDA R6 @356           # Carrega o valor do Time Counter para R6
+    ANDI R6 @7
+    CHECK R6 @7            # Verifica se o Time Counter é igual a 0
+    JNE @.MAIN_LOOP        # Se for igual a 0, continua no loop
+
+    JSR @.INCREMENT_TIME  # Subrotina para incrementar o tempo
+
+    JSR @.DECREMENT_TIMER # Subrotina para decrementar o timer (caso esteja setado)
+
+    STA R0 @507           # Limpa Leitura do Time Counter
+
+    JMP @.MAIN_LOOP
+
+.INCREMENT_TIME:
+    # Incrementa o tempo
+
+    LDA R7 @0             # Carrega o valor das unidades dos segundos para R7
+    SOMA R7 @7            # Incrementa o valor das unidades dos segundos
+    STA R7 @0             # Salva o valor das unidades dos segundos
+
+    LDA R7 @0             # Carrega o valor das unidades dos segundos para R7
+    CHECK R7 @8           # Verifica se o valor das unidades dos segundos é igual a 10
+    JNE @.RETURN          # Se não for, retorna
+
+    # Reset das unidades dos segundos 
+
+    STA R0 @0             # 0 -> Valor das unidades dos segundos
+
+    LDA R7 @1             # Carrega o valor das dezenas dos segundos para R7
+    SOMA R7 @7            # Incrementa o valor das dezenas dos segundos
+    STA R7 @1             # Salva o valor das dezenas dos segundos
+
+    LDA R7 @1             # Carrega o valor das dezenas dos segundos para R7
+    CHECK R7 @9           # Verifica se o valor das dezenas dos segundos é igual a 6
+    JNE @.RETURN          # Se não for, retorna
+
+    # Reset das dezenas dos segundos
+
+    STA R0 @1             # 0 -> Valor das dezenas dos segundos
+
+    LDA R7 @2             # Carrega o valor das unidades dos minutos para R7
+    SOMA R7 @7            # Incrementa o valor das unidades dos minutos
+    STA R7 @2             # Salva o valor das unidades dos minutos
+
+    LDA R7 @2             # Carrega o valor das unidades dos minutos para R7
+    CHECK R7 @8           # Verifica se o valor das unidades dos minutos é igual a 10
+    JNE @.RETURN          # Se não for, retorna
+
+    # Reset das unidades dos minutos
+
+    STA R0 @2             # 0 -> Valor das unidades dos minutos
+
+    LDA R7 @3             # Carrega o valor das dezenas dos minutos para R7
+    SOMA R7 @7            # Incrementa o valor das dezenas dos minutos
+    STA R7 @3             # Salva o valor das dezenas dos minutos
+
+    LDA R7 @3             # Carrega o valor das dezenas dos minutos para R7
+    CHECK R7 @9           # Verifica se o valor das dezenas dos minutos é igual a 6
+    JNE @.RETURN          # Se não for, retorna
+
+    # Reset das dezenas dos minutos
+
+    STA R0 @3             # 0 -> Valor das dezenas dos minutos
+
+    JSR @.HOURS      # Se não for, pula para a label HOUR_LT_20
+
+    # Se for, usa o limite 4 para as unidades das horas
+
+    JMP @.RETURN          # Retorna
+
+.HOURS:
+    LDA R7 @5             # Carrega o valor das dezenas das horas para R7
+    CHECK R7 @10          # Verifica se o valor das dezenas dos minutos é igual a 2
+    JEQ @.HOUR_GT_20
+
+    # Se o valor das dezenas das horas for menor que 2, usa o limite 9 para as unidades das horas
+
+    LDA R7 @4             # Carrega o valor das unidades das horas para R7
+    SOMA R7 @7            # Incrementa o valor das unidades das horas
+    STA R7 @4             # Salva o valor das unidades das horas
+
+    LDA R7 @4             # Carrega o valor das unidades das horas para R7
+    CHECK R7 @8           # Verifica se o valor das unidades das horas é igual a 10
+    JNE @.RETURN          # Se não for, retorna
+
+    # Reset das unidades das horas
+
+    STA R0 @4             # 0 -> Valor das unidades das horas
+
+    # Incrementa o valor das dezenas das horas
+
+    LDA R7 @5             # Carrega o valor das dezenas das horas para R7
+    SOMA R7 @7            # Incrementa o valor das dezenas das horas
+    STA R7 @5             # Salva o valor das dezenas das horas
+
+    RET
+
+.HOUR_GT_20:
+    # Se o valor das dezenas das horas for maior que 2, usa o limite 3 para as unidades das horas
+
+    LDA R7 @4             # Carrega o valor das unidades das horas para R7
+    SOMA R7 @7            # Incrementa o valor das unidades das horas
+    STA R7 @4             # Salva o valor das unidades das horas
+
+    LDA R7 @4             # Carrega o valor das unidades das horas para R7
+    CHECK R7 @11           # Verifica se o valor das unidades das horas é igual a 4
+    JNE @.RETURN          # Se não for, retorna
+
+    # Reset das unidades das horas
+
+    STA R0 @4             # 0 -> Valor das unidades das horas
+
+    LDA R7 @5             # Carrega o valor das dezenas das horas para R7
+    SOMA R7 @7            # Incrementa o valor das dezenas das horas
+    STA R7 @5             # Salva o valor das dezenas das horas
+
+    LDA R7 @5             # Carrega o valor das dezenas das horas para R7
+    CHECK R7 @13          # Verifica se o valor das dezenas das horas é igual a 3
+    JNE @.RETURN          # Se não for, retorna
+
+    # Reset das dezenas das horas
+
+    STA R0 @5             # 0 -> Valor das dezenas das horas
+
+    RET
+
+.DISPLAY:
+    LDA R7 @320           # Carrega o valor dos SW0 até SW7 para R7
+    ANDI R7 @46           # Aplica máscara AND para isolar o bit 6
+    CHECK R7 @46          # Verifica se o bit 6 está setado
+    JEQ @.DISPLAY_TIMER   # Se estiver, pula para a label DISPLAY_TIMER
+
+.DISPLAY_24H:
+    LDA R7 @5             # Carrega o valor das dezenas das horas para R7
+    STA R7 @293           # Salva o valor das dezenas das horas em HEX5
+
+    LDA R7 @4             # Carrega o valor das unidades das horas para R7
+    STA R7 @292           # Salva o valor das unidades das horas em HEX4
+
+    LDA R7 @3             # Carrega o valor das dezenas dos minutos para R7
+    STA R7 @291           # Salva o valor das dezenas dos minutos em HEX3
+
+    LDA R7 @2             # Carrega o valor das unidades dos minutos para R7
+    STA R7 @290           # Salva o valor das unidades dos minutos em HEX2
+
+    LDA R7 @1             # Carrega o valor das dezenas dos segundos para R7
+    STA R7 @289           # Salva o valor das dezenas dos segundos em HEX1
+
+    LDA R7 @0             # Carrega o valor das unidades dos segundos para R7
+    STA R7 @288           # Salva o valor das unidades dos segundos em HEX0
+
+    RET
+
+.DISPLAY_TIMER:
+    LDA R7 @26            # Carrega o valor das dezenas das horas do timer para R7
+    STA R7 @293           # Salva o valor das dezenas das horas do timer em HEX5
+
+    LDA R7 @25            # Carrega o valor das unidades das horas do timer para R7
+    STA R7 @292           # Salva o valor das unidades das horas do timer em HEX4
+
+    LDA R7 @24            # Carrega o valor das dezenas dos minutos do timer para R7
+    STA R7 @291           # Salva o valor das dezenas dos minutos do timer em HEX3
+
+    LDA R7 @23            # Carrega o valor das unidades dos minutos do timer para R7
+    STA R7 @290           # Salva o valor das unidades dos minutos do timer em HEX2
+
+    LDA R7 @22            # Carrega o valor das dezenas dos segundos do timer para R7
+    STA R7 @289           # Salva o valor das dezenas dos segundos do timer em HEX1
+
+    LDA R7 @21            # Carrega o valor das unidades dos segundos do timer para R7
+    STA R7 @288           # Salva o valor das unidades dos segundos do timer em HEX0
+
+    RET
+
+.SET_TIMER: 
+    LDA R7 @320           # Carrega o R7 com a leitura das chaves SW0 até SW7
+    ANDI R7 @12           # Aplica máscara AND para isolar o bit 7 
+    CHECK R7 @12          # Verifica se a chave SW7 está pressionada
+    JEQ @.RETURN          # Se não estiver, retorna
+
+    LDA R7 @352            # Carrega o valor do botão KEY0
+    ANDI R7 @7             # Aplica máscara AND para isolar o bit 0
+    CHECK R7 @7            # Se KEY0 estiver pressionada, passa a setar o limite de incremento
+    STA @511               # Limpa Leitura KEY0
+    JNE @.RETURN           # Se não estiver, retorna
+
+    LDA R7 @27            # Carrega o valor da flag de timer para R7
+    CHECK R7 @7           # Verifica se a flag de timer está setada
+    JEQ @.RETURN          # Se estiver, retorna
+
+.SET_TIMER_TENS_HOURS:
+    STA R1 @257             # Acende o LEDR8 para indicar que é o timer que está sendo setado, e não o alarme
+    JSR @.ALARM_SET_LED
+
+    LDA R7 @34               # Carrega o valor da flag de ajuste das dezenas (< 2) das horas para R7
+    CHECK R7 @7              # Verifica se a flag de ajuste das dezenas das horas está setada
+    JEQ @.SET_TIMER_HOURS_LT_20 # Se estiver, pula para a label SET_TIMER_HOURS_LT_20
+
+    LDA R7 @33               # Carrega o valor da flag de ajuste das dezenas (>= 2) das horas para R7
+    CHECK R7 @7              # Verifica se a flag de ajuste das dezenas das horas está setada
+    JEQ @.SET_TIMER_HOURS_EQ_20 # Se estiver, pula para a label SET_TIMER_HOURS_EQ_20
+
+    LDA R7 @320          # Carrega o r7 com a leitura das chaves SW0 até SW7  
+    ANDI R7 @45           # Aplica máscara AND para não haver leitura do SW7 ~ SW4  
+    STA R7 @26           # Salva o valor de SW0 até SW7 em @26
+
+    # Verifica se é um valor válido para as dezenas das horas
+
+    LDA R7 @26            # Carrega o valor de SW0 até SW7 para R7
+    CHECK R7 @10          # Compara o valor de SW0 até SW7 com 2
+    JLT @.FLAG_TIMER_T_H_LT_20 # Se for menor que 2, pula para a label FLAG_TIMER_T_H_LT_20
+    JEQ @.FLAG_TIMER_T_H_EQ_20 # Se for igual a 2, pula para a label FLAG_TIMER_T_H_EQ_20
+    JMP @.RETURN # Se for maior que 2, não seta o valor e retorna
+
+.FLAG_TIMER_T_H_LT_20:
+    LDI R3 $32            # Seta o valor 32 para R3
+    STA R3 @256           # Acende o LEDR5 para indicar que o valor das dezenas das horas do timer foi setado
+    STA R1 @34            # Ativa a flag de ajuste das dezenas das horas
+
+    RET 
+
+.SET_TIMER_HOURS_LT_20:
+    LDA R7 @32           # Carrega o valor da flag de ajuste das unidades das horas para R7
+    CHECK R7 @7          # Verifica se a flag de ajuste das unidades das horas está setada
+    JEQ @.SET_TIMER_TENS_MINUTES # Se estiver, pula para a label SET_TIMER_TENS_MINUTES
+
+    LDA R7 @320          # Carrega o r7 com a leitura das chaves SW0 até SW7
+    ANDI R7 @45           # Aplica máscara AND para não haver leitura do SW7 ~ SW4
+    STA R7 @25           # Salva o valor de SW0 até SW7 em @25
+
+    # Verifica se é um valor válido para as unidades das horas
+
+    LDA R7 @25            # Carrega o valor de SW0 até SW7 para R7
+    CHECK R7 @8           # Compara o valor de SW0 até SW7 com 10
+    JLT @.FLAG_TIMER_T_M # Se for menor que 10, pula para a label FLAG_TIMER_T_M
+    JMP @.RETURN # Se for maior que 10, não seta o valor e retorna
+
+.FLAG_TIMER_T_H_EQ_20:
+    LDI R3 $32            # Seta o valor 32 para R3
+    STA R3 @256           # Acende o LEDR5 para indicar que o valor das dezenas das horas do timer foi setado
+    STA R1 @33            # Ativa a flag de ajuste das dezenas das horas
+
+    RET
+
+.SET_TIMER_HOURS_EQ_20:
+    LDA R7 @32           # Carrega o valor da flag de ajuste das unidades das horas para R7 
+    CHECK R7 @7          # Verifica se a flag de ajuste das unidades das horas está setada
+    JEQ @.SET_TIMER_TENS_MINUTES # Se estiver, pula para a label SET_TIMER_TENS_MINUTES
+
+    LDA R7 @320          # Carrega o r7 com a leitura das chaves SW0 até SW7
+    ANDI R7 @45           # Aplica máscara AND para não haver leitura do SW7 ~ SW4
+    STA R7 @25           # Salva o valor de SW0 até SW7 em @25
+
+    # Verifica se é um valor válido para as unidades das horas
+
+    LDA R7 @25            # Carrega o valor de SW0 até SW7 para R7
+    CHECK R7 @11          # Compara o valor de SW0 até SW7 com 4
+    JLT @.FLAG_TIMER_T_M # Se for menor que 4, pula para a label FLAG_TIMER_T_M
+    JMP @.RETURN # Se for maior que 4, não seta o valor e retorna
+
+.FLAG_TIMER_T_M:
+    LDI R3 $48            # Seta o valor 48 para R3
+    STA R3 @256           # Acende o LEDR5 e LEDR4 para indicar que os valores das dezenas e unidade de horas do timer foram setados
+    STA R1 @32            # Ativa a flag de ajuste das unidades das horas
+
+    RET
+
+.SET_TIMER_TENS_MINUTES:
+    LDA R7 @31            # Carrega o valor da flag de ajuste das dezenas dos minutos para R7
+    CHECK R7 @7           # Verifica se a flag de ajuste das dezenas dos minutos está setada
+    JEQ @.SET_TIMER_UNITS_MINUTES # Se estiver, pula para a label SET_TIMER_UNITS_MINUTES
+
+    LDA R7 @320          # Carrega o r7 com a leitura das chaves SW0 até SW7
+    ANDI R7 @45           # Aplica máscara AND para não haver leitura do SW7 ~ SW4
+    STA R7 @24           # Salva o valor de SW0 até SW7 em @24
+
+    # Verifica se é um valor válido para as dezenas dos minutos
+
+    LDA R7 @24            # Carrega o valor de SW0 até SW7 para R7
+    CHECK R7 @9          # Compara o valor de SW0 até SW7 com 6
+    JLT @.FLAG_TIMER_U_M # Se for menor que 6, pula para a label FLAG_TIMER_U_M
+    JMP @.RETURN # Se for maior que 6, não seta o valor e retorna
+
+.FLAG_TIMER_U_M:
+    LDI R3 $56            # Seta o valor 56 para R3
+    STA R3 @256           # Acende o LEDR5, LEDR4 e LEDR3 para indicar que os valores das dezenas, unidade de horas e dezenas de minutos do timer foram setados
+    STA R1 @31            # Ativa a flag de ajuste das dezenas dos minutos
+
+    RET
+
+.SET_TIMER_UNITS_MINUTES:
+    LDA R7 @30            # Carrega o valor da flag de ajuste das unidades dos minutos para R7
+    CHECK R7 @7           # Verifica se a flag de ajuste das unidades dos minutos está setada
+    JEQ @.SET_TIMER_TENS_SECONDS # Se estiver, pula para a label SET_TIMER_UNITS_MINUTES
+
+    LDA R7 @320          # Carrega o r7 com a leitura das chaves SW0 até SW7
+    ANDI R7 @45           # Aplica máscara AND para não haver leitura do SW7 ~ SW4
+    STA R7 @23           # Salva o valor de SW0 até SW7 em @23
+
+    # Verifica se é um valor válido para as unidades dos minutos
+
+    LDA R7 @23            # Carrega o valor de SW0 até SW7 para R7
+    CHECK R7 @8          # Compara o valor de SW0 até SW7 com 10
+    JLT @.FLAG_TIMER_T_S # Se for menor que 10, pula para a label FLAG_TIMER_T_S
+    JMP @.RETURN # Se for maior que 10, não seta o valor e retorna
+
+.FLAG_TIMER_T_S:
+    LDI R3 $60            # Seta o valor 60 para R3
+    STA R3 @256           # Acende os LEDR5, LEDR4, LEDR3 e LEDR2 para indicar que os valores das dezenas, unidade de horas e dezenas de minutos do timer foram setados
+    STA R1 @30            # Ativa a flag de ajuste das unidades dos minutos
+
+    RET
+    
+.SET_TIMER_TENS_SECONDS:
+    LDA R7 @29            # Carrega o valor da flag de ajuste das dezenas dos segundos para R7
+    CHECK R7 @7           # Verifica se a flag de ajuste das dezenas dos segundos está setada
+    JEQ @.SET_TIMER_UNITS_SECONDS # Se estiver, pula para a label SET_TIMER_UNITS_SECONDS
+
+    LDA R7 @320          # Carrega o r7 com a leitura das chaves SW0 até SW7
+    ANDI R7 @45           # Aplica máscara AND para não haver leitura do SW7 ~ SW4
+    STA R7 @22           # Salva o valor de SW0 até SW7 em @22
+
+    # Verifica se é um valor válido para as dezenas dos segundos
+
+    LDA R7 @22            # Carrega o valor de SW0 até SW7 para R7
+    CHECK R7 @9          # Compara o valor de SW0 até SW7 com 6
+    JLT @.FLAG_TIMER_U_S # Se for menor que 6, pula para a label FLAG_TIMER_U_S
+    JMP @.RETURN # Se for maior que 6, não seta o valor e retorna
+
+.FLAG_TIMER_U_S:
+    LDI R3 $62            # Seta o valor 62 para R3
+    STA R3 @256           # Acende o LEDR5, LEDR4, LEDR3, LEDR2 e LEDR1 para indicar que os valores das dezenas, unidade de horas, dezenas e unidade de minutos e dezenas dos segundos do timer foram setados
+    STA R1 @29            # Ativa a flag de ajuste das dezenas dos segundos
+
+    RET
+    
+.SET_TIMER_UNITS_SECONDS:
+    LDA R7 @28            # Carrega o valor da flag de ajuste das unidades dos segundos para R7
+    CHECK R7 @7           # Verifica se a flag de ajuste das unidades dos segundos está setada
+    JEQ @.TIMER_SET       # Se estiver, pula para a label TIMER_SET
+
+    LDA R7 @320          # Carrega o r7 com a leitura das chaves SW0 até SW7
+    ANDI R7 @45           # Aplica máscara AND para não haver leitura do SW7 ~ SW4
+    STA R7 @21           # Salva o valor de SW0 até SW7 em @21
+
+    # Verifica se é um valor válido para as unidades dos segundos
+
+    LDA R7 @21            # Carrega o valor de SW0 até SW7 para R7
+    CHECK R7 @8          # Compara o valor de SW0 até SW7 com 10
+    JLT @.TIMER_SET # Se for menor que 10, pula para a label TIMER_SET
+    JMP @.RETURN # Se for maior que 10, não seta o valor e retorna
+
+.TIMER_SET:
+    LDI R3 $63            # Seta o valor 63 para R3
+    STA R3 @256           # Acende o LEDR5, LEDR4, LEDR3, LEDR2, LEDR1 e LEDR0 para indicar que os valores das dezenas, unidade de horas, dezenas e unidade de minutos e dezenas e unidade dos segundos do timer foram setados
+    STA R1 @28            # Ativa a flag de ajuste das unidades dos segundos
+
+    STA R1 @27            # Ativa a flag de timer setado 
+
+    STA R0 @36            # 0 -> Flag de timer finalizado
+
+    RET
+
+.DECREMENT_TIMER:
+    LDA R7 @27            # Carrega o valor da flag de timer para R7
+    CHECK R7 @7           # Verifica se a flag de timer está setada
+    JNE @.RETURN          # Se não estiver, retorna
+
+    LDA R7 @36            # Carrega o valor da flag de timer finalizado para R7
+    CHECK R7 @7           # Verifica se a flag de timer finalizado está setada
+    JEQ @.RETURN          # Se estiver, retorna
+
+    # Decrementa o valor das unidades dos segundos do timer
+
+    LDA R7 @21             # Carrega o valor das unidades dos segundos do timer para R7
+    SUB R7 @7              # Decrementa o valor das unidades dos segundos do timer
+    STA R7 @21             # Salva o valor das unidades dos segundos do timer
+
+    LDA R7 @35             # Carrega o valor -1 para R7
+    CHECK R7 @21           # Verifica se o valor das unidades dos segundos do timer é igual a -1
+    JNE @.RETURN           # Se não for, retorna
+
+    # Reset das unidades dos segundos do timer
+
+    LDI R3 $9             # Seta o valor 9 para R3
+    STA R3 @21            # Salva o valor 9 nas unidades dos segundos do timer
+
+    # Decrementa o valor das dezenas dos segundos do timer
+
+    LDA R7 @22             # Carrega o valor das dezenas dos segundos do timer para R7
+    SUB R7 @7              # Decrementa o valor das dezenas dos segundos do timer
+    STA R7 @22             # Salva o valor das dezenas dos segundos do timer
+
+    LDA R7 @35             # Carrega o valor -1 para R7
+    CHECK R7 @22           # Verifica se o valor das dezenas dos segundos do timer é igual a -1
+    JNE @.RETURN           # Se não for, retorna
+
+    # Reset das dezenas dos segundos do timer
+
+    LDI R3 $5             # Seta o valor 5 para R3
+    STA R3 @22            # Salva o valor 5 nas dezenas dos segundos do timer
+
+    # Decrementa o valor das unidades dos minutos do timer
+
+    LDA R7 @23             # Carrega o valor das unidades dos minutos do timer para R7
+    SUB R7 @7              # Decrementa o valor das unidades dos minutos do timer
+    STA R7 @23             # Salva o valor das unidades dos minutos do timer
+
+    LDA R7 @35             # Carrega o valor -1 para R7
+    CHECK R7 @23           # Verifica se o valor das unidades dos minutos do timer é igual a -1
+    JNE @.RETURN           # Se não for, retorna
+
+    # Reset das unidades dos minutos do timer
+
+    LDI R3 $9             # Seta o valor 9 para R3
+    STA R3 @23            # Salva o valor 9 nas unidades dos minutos do timer
+
+    # Decrementa o valor das dezenas dos minutos do timer
+
+    LDA R7 @24             # Carrega o valor das dezenas dos minutos do timer para R7
+    SUB R7 @7              # Decrementa o valor das dezenas dos minutos do timer
+    STA R7 @24             # Salva o valor das dezenas dos minutos do timer
+
+    LDA R7 @35             # Carrega o valor -1 para R7
+    CHECK R7 @24           # Verifica se o valor das dezenas dos minutos do timer é igual a -1
+    JNE @.RETURN           # Se não for, retorna
+
+    # Reset das dezenas dos minutos do timer
+
+    LDI R3 $5             # Seta o valor 5 para R3
+    STA R3 @24            # Salva o valor 5 nas dezenas dos minutos do timer
+
+    # Decrementa o valor das unidades das horas do timer
+
+    LDA R7 @25             # Carrega o valor das unidades das horas do timer para R7
+    SUB R7 @7              # Decrementa o valor das unidades das horas do timer
+    STA R7 @25             # Salva o valor das unidades das horas do timer
+
+    LDA R7 @35             # Carrega o valor -1 para R7
+    CHECK R7 @25           # Verifica se o valor das unidades das horas do timer é igual a -1
+    JNE @.RETURN           # Se não for, retorna
+
+    # Reset das unidades das horas do timer
+
+    LDI R3 $9             # Seta o valor 9 para R3
+    STA R3 @25            # Salva o valor 9 nas unidades das horas do timer
+
+    # Decrementa o valor das dezenas das horas do timer
+
+    LDA R7 @26             # Carrega o valor das dezenas das horas do timer para R7
+    SUB R7 @7              # Decrementa o valor das dezenas das horas do timer
+    STA R7 @26             # Salva o valor das dezenas das horas do timer
+
+    LDA R7 @35             # Carrega o valor -1 para R7
+    CHECK R7 @26           # Verifica se o valor das dezenas das horas do timer é igual a -1
+    JNE @.RETURN           # Se não for, retorna
+
+    # Se chegou até aqui, o timer chegou ao fim 
+
+    STA R1 @36            # Ativa a flag de timer finalizado
+
+    STA R0 @27            # Desativa a flag de timer
+
+    # Garantindo que os valores do alarme sejam resetados
+
+    STA R0 @21            # 0 -> Novo valor das unidades dos segundos
+    STA R0 @22            # 0 -> Novo valor das dezenas dos segundos
+    STA R0 @23            # 0 -> Novo valor das unidades dos minutos
+    STA R0 @24            # 0 -> Novo valor das dezenas dos minutos
+    STA R0 @25            # 0 -> Novo valor das unidades das horas
+    STA R0 @26            # 0 -> Novo valor das dezenas das horas
+
+    STA R0 @28            # Desativa a flag de ajuste das unidades dos segundos do timer
+    STA R0 @29            # Desativa a flag de ajuste das dezenas dos segundos do timer
+    STA R0 @30            # Desativa a flag de ajuste das unidades dos minutos do timer
+    STA R0 @31            # Desativa a flag de ajuste das dezenas dos minutos do timer
+    STA R0 @32            # Desativa a flag de ajuste das unidades das horas do timer
+    STA R0 @33            # Desativa a flag de ajuste das dezenas (>= 2) das horas do timer
+    STA R0 @34            # Desativa a flag de ajuste das dezenas (< 2) das horas do timer
+
+    STA R0 @256           # Apaga os LEDR0 até LEDR7
+    STA R0 @257           # Apaga o LEDR8
+
+    RET
+
+.ADJUST_HOURS:
+    LDA R7 @355            # Carrega o valor do botão KEY3
+    ANDI R7 @7             # Aplica máscara AND para isolar o bit 0
+    CHECK R7 @7            # Se KEY1 estiver pressionada, passa a setar o limite de incremento
+    STA @508               # Limpa Leitura KEY3
+    JNE @.RETURN           # Se não estiver, retorna
+
+    LDA R7 @5             # Carrega o valor das dezenas das horas para R7
+    CHECK R7 @10          # Verifica se o valor das dezenas das horas é menor que 2
+    JLT @.ADJUST_HOURS_LT_20 # Se for menor que 2, pula para a label ADJUST_HOURS_LT_20
+
+    # Se for maior ou igual a 2, usa o limite 4 para as unidades das horas
+
+    LDA R7 @4             # Carrega o valor das unidades das horas para R7
+    SOMA R7 @7            # Incrementa o valor das unidades das horas
+    STA R7 @4             # Salva o valor das unidades das horas
+
+    LDA R7 @4             # Carrega o valor das unidades das horas para R7
+    CHECK R7 @11          # Verifica se o valor das unidades das horas é menor que 4
+    JLT @.RETURN          # Se for, retorna
+
+    # Reset das unidades das horas
+
+    STA R0 @4             # 0 -> Valor das unidades das horas
+
+    # Como o valor das dezenas de hora será, com certeza, 2, reseta as dezenas das horas direto
+
+    STA R0 @5             # 0 -> Valor das dezenas das horas
+
+    RET
+
+.ADJUST_HOURS_LT_20:
+    LDA R7 @4             # Carrega o valor das unidades das horas para R7
+    SOMA R7 @7            # Incrementa o valor das unidades das horas
+    STA R7 @4             # Salva o valor das unidades das horas
+
+    LDA R7 @4             # Carrega o valor das unidades das horas para R7
+    CHECK R7 @8           # Verifica se o valor das unidades das horas é menor que 10
+    JLT @.RETURN          # Se não for, retorna
+
+    # Reset das unidades das horas
+
+    STA R0 @4             # 0 -> Valor das unidades das horas
+
+    # Incrementa o valor das dezenas das horas
+
+    LDA R7 @5             # Carrega o valor das dezenas das horas para R7
+    SOMA R7 @7            # Incrementa o valor das dezenas das horas
+    STA R7 @5             # Salva o valor das dezenas das horas
+
+    RET
+
+.ADJUST_MINUTES:
+    LDA R7 @354            # Carrega o valor do botão KEY2
+    ANDI R7 @7             # Aplica máscara AND para isolar o bit 0
+    CHECK R7 @7            # Se KEY2 estiver pressionada, passa a setar o limite de incremento
+    STA @509               # Limpa Leitura KEY2
+    JNE @.RETURN           # Se não estiver, retorna
+
+    LDA R7 @2             # Carrega o valor das unidades dos minutos para R7
+    SOMA R7 @7            # Incrementa o valor das unidades dos minutos
+    STA R7 @2             # Salva o valor das unidades dos minutos
+
+    LDA R7 @2             # Carrega o valor das unidades dos minutos para R7
+    CHECK R7 @8           # Verifica se o valor das unidades dos minutos é menor que 10
+    JLT @.RETURN          # Se não for, retorna
+
+    # Reset das unidades dos minutos
+
+    STA R0 @2             # 0 -> Valor das unidades dos minutos
+
+    # Incrementa o valor das dezenas dos minutos
+
+    LDA R7 @3             # Carrega o valor das dezenas dos minutos para R7
+    SOMA R7 @7            # Incrementa o valor das dezenas dos minutos
+    STA R7 @3             # Salva o valor das dezenas dos minutos
+
+    LDA R7 @3             # Carrega o valor das dezenas dos minutos para R7
+    CHECK R7 @9           # Verifica se o valor das dezenas dos minutos é menor que 6
+    JLT @.RETURN          # Se não for, retorna
+
+    # Reset das dezenas dos minutos
+
+    STA R0 @3             # 0 -> Valor das dezenas dos minutos
+
+    RET
+
+.ADJUST_SECONDS:
+    LDA R7 @353            # Carrega o valor do botão KEY1
+    ANDI R7 @7             # Aplica máscara AND para isolar o bit 0
+    CHECK R7 @7            # Se KEY1 estiver pressionada, passa a setar o limite de incremento
+    STA @510               # Limpa Leitura KEY1
+    JNE @.RETURN           # Se não estiver, retorna
+
+    LDA R7 @0             # Carrega o valor das unidades dos segundos para R7
+    SOMA R7 @7            # Incrementa o valor das unidades dos segundos
+    STA R7 @0             # Salva o valor das unidades dos segundos
+
+    LDA R7 @0             # Carrega o valor das unidades dos segundos para R7
+    CHECK R7 @8           # Verifica se o valor das unidades dos segundos é menor que 10
+    JLT @.RETURN          # Se não for, retorna
+
+    # Reset das unidades dos segundos
+
+    STA R0 @0             # 0 -> Valor das unidades dos segundos
+
+    # Incrementa o valor das dezenas dos segundos
+
+    LDA R7 @1             # Carrega o valor das dezenas dos segundos para R7
+    SOMA R7 @7            # Incrementa o valor das dezenas dos segundos
+    STA R7 @1             # Salva o valor das dezenas dos segundos
+
+    LDA R7 @1             # Carrega o valor das dezenas dos segundos para R7
+    CHECK R7 @9          # Verifica se o valor das dezenas dos segundos é menor que 6
+    JLT @.RETURN          # Se não for, retorna
+
+    # Reset das dezenas dos segundos
+
+    STA R0 @1             # 0 -> Valor das dezenas dos segundos
+
+    RET
+
+.SET_ALARM:
+    LDA R7 @320           # Carrega o R7 com a leitura das chaves SW0 até SW7
+    ANDI R7 @12           # Aplica máscara AND para isolar o bit 7 
+    CHECK R7 @12          # Verifica se a chave SW7 está pressionada
+    JNE @.RETURN          # Se não estiver, retorna
+
+    LDA R7 @352            # Carrega o valor do botão KEY0
+    ANDI R7 @7             # Aplica máscara AND para isolar o bit 0
+    CHECK R7 @7            # Se KEY0 estiver pressionada, passa a setar o limite de incremento
+    STA @511               # Limpa Leitura KEY0
+    JNE @.RETURN           # Se não estiver, retorna
+
+    LDA R7 @14            # Carrega o valor da flag de alarme para R7
+    CHECK R7 @7           # Verifica se a flag de alarme está setada
+    JEQ @.RETURN          # Se estiver, retorna
+
+.SET_ALARM_TENS_HOURS:
+    JSR @.TIMER_SET_LED
+    STA R1 @258             # Acende o LEDR9 para indicar que é o alarme que está sendo setado
+
+    LDA R7 @43               # Carrega o valor da flag de ajuste das dezenas (< 2) das horas para R7
+    CHECK R7 @7              # Verifica se a flag de ajuste das dezenas das horas está setada
+    JEQ @.SET_ALARM_HOURS_LT_20 # Se estiver, pula para a label SET_ALARM_HOURS_LT_20
+
+    LDA R7 @42               # Carrega o valor da flag de ajuste das dezenas (>= 2) das horas para R7
+    CHECK R7 @7              # Verifica se a flag de ajuste das dezenas das horas está setada
+    JEQ @.SET_ALARM_HOURS_EQ_20 # Se estiver, pula para a label SET_ALARM_HOURS_EQ_20
+
+    LDA R7 @320          # Carrega o r7 com a leitura das chaves SW0 até SW7
+    ANDI R7 @45           # Aplica máscara AND para não haver leitura do SW7 ~ SW4
+    STA R7 @20           # Salva o valor de SW0 até SW7 em @20
+
+    # Verifica se é um valor válido para as dezenas das horas
+
+    LDA R7 @20            # Carrega o valor de SW0 até SW7 para R7
+    CHECK R7 @10          # Compara o valor de SW0 até SW7 com 2
+    JLT @.FLAG_ALARM_T_H_LT_20 # Se for menor que 2, pula para a label FLAG_ALARM_T_H_LT_20
+    JEQ @.FLAG_ALARM_T_H_EQ_20 # Se for igual a 2, pula para a label FLAG_ALARM_T_H_EQ_20
+    JMP @.RETURN # Se for maior que 2, não seta o valor e retorna
+
+.FLAG_ALARM_T_H_LT_20:
+    LDI R3 $32            # Seta o valor 32 para R3
+    STA R3 @256           # Acende o LEDR5 para indicar que o valor das dezenas das horas do alarme foi setado
+    STA R1 @43            # Ativa a flag de ajuste das dezenas das horas
+
+    RET
+
+.SET_ALARM_HOURS_LT_20:
+    LDA R7 @41           # Carrega o valor da flag de ajuste das unidades das horas para R7
+    CHECK R7 @7          # Verifica se a flag de ajuste das unidades das horas está setada
+    JEQ @.SET_ALARM_TENS_MINUTES # Se estiver, pula para a label SET_ALARM_TENS_MINUTES
+
+    LDA R7 @320          # Carrega o r7 com a leitura das chaves SW0 até SW7
+    ANDI R7 @45           # Aplica máscara AND para não haver leitura do SW7 ~ SW4
+    STA R7 @19           # Salva o valor de SW0 até SW7 em @19
+
+    # Verifica se é um valor válido para as unidades das horas
+
+    LDA R7 @19            # Carrega o valor de SW0 até SW7 para R7
+    CHECK R7 @8           # Compara o valor de SW0 até SW7 com 10
+    JLT @.FLAG_ALARM_T_M # Se for menor que 10, pula para a label FLAG_ALARM_T_M
+    JMP @.RETURN # Se for maior que 10, não seta o valor e retorna
+
+.FLAG_ALARM_T_H_EQ_20:
+    LDI R3 $32            # Seta o valor 32 para R3
+    STA R3 @256           # Acende o LEDR5 para indicar que o valor das dezenas das horas do alarme foi setado
+    STA R1 @42            # Ativa a flag de ajuste das dezenas das horas
+
+    STA R1 @258           # Acende o LEDR9 para indicar que é o alarme que está sendo setado, e não o timer
+    
+    RET
+
+.SET_ALARM_HOURS_EQ_20:
+    LDA R7 @41           # Carrega o valor da flag de ajuste das unidades das horas para R7
+    CHECK R7 @7          # Verifica se a flag de ajuste das unidades das horas está setada
+    JEQ @.SET_ALARM_TENS_MINUTES # Se estiver, pula para a label SET_ALARM_TENS_MINUTES
+
+    LDA R7 @320          # Carrega o r7 com a leitura das chaves SW0 até SW7
+    ANDI R7 @45           # Aplica máscara AND para não haver leitura do SW7 ~ SW4
+    STA R7 @19           # Salva o valor de SW0 até SW7 em @19
+
+    # Verifica se é um valor válido para as unidades das horas
+
+    LDA R7 @19            # Carrega o valor de SW0 até SW7 para R7
+    CHECK R7 @11          # Compara o valor de SW0 até SW7 com 4
+    JLT @.FLAG_ALARM_T_M # Se for menor que 4, pula para a label FLAG_ALARM_T_M
+    JMP @.RETURN # Se for maior que 4, não seta o valor e retorna
+
+.FLAG_ALARM_T_M:
+    LDI R3 $48            # Seta o valor 48 para R3
+    STA R3 @256           # Acende o LEDR5 e LEDR4 para indicar que os valores das dezenas e unidade de horas do alarme foram setados
+    STA R1 @41            # Ativa a flag de ajuste das unidades das horas
+
+    STA R1 @258           # Acende o LEDR9 para indicar que é o alarme que está sendo setado, e não o timer
+
+    RET
+
+.SET_ALARM_TENS_MINUTES:
+    LDA R7 @40            # Carrega o valor da flag de ajuste das dezenas dos minutos para R7
+    CHECK R7 @7           # Verifica se a flag de ajuste das dezenas dos minutos está setada
+    JEQ @.SET_ALARM_UNITS_MINUTES # Se estiver, pula para a label SET_ALARM_UNITS_MINUTES
+
+    LDA R7 @320          # Carrega o r7 com a leitura das chaves SW0 até SW7
+    ANDI R7 @45           # Aplica máscara AND para não haver leitura do SW7 ~ SW4
+    STA R7 @18           # Salva o valor de SW0 até SW7 em @18
+
+    # Verifica se é um valor válido para as dezenas dos minutos
+
+    LDA R7 @18            # Carrega o valor de SW0 até SW7 para R7
+    CHECK R7 @9          # Compara o valor de SW0 até SW7 com 6
+    JLT @.FLAG_ALARM_U_M # Se for menor que 6, pula para a label FLAG_ALARM_U_M
+    JMP @.RETURN # Se for maior que 6, não seta o valor e retorna
+
+.FLAG_ALARM_U_M:
+    LDI R3 $56            # Seta o valor 56 para R3
+    STA R3 @256           # Acende o LEDR5, LEDR4 e LEDR3 para indicar que os valores das dezenas, unidade de horas e dezenas de minutos do alarme foram setados
+    STA R1 @40            # Ativa a flag de ajuste das dezenas dos minutos
+
+    STA R1 @258           # Acende o LEDR9 para indicar que é o alarme que está sendo setado, e não o timer
+
+    RET
+
+.SET_ALARM_UNITS_MINUTES:
+    LDA R7 @39            # Carrega o valor da flag de ajuste das unidades dos minutos para R7
+    CHECK R7 @7           # Verifica se a flag de ajuste das unidades dos minutos está setada
+    JEQ @.SET_ALARM_TENS_SECONDS # Se estiver, pula para a label SET_ALARM_TENS_SECONDS
+
+    LDA R7 @320          # Carrega o r7 com a leitura das chaves SW0 até SW7
+    ANDI R7 @45           # Aplica máscara AND para não haver leitura do SW7 ~ SW4
+    STA R7 @17           # Salva o valor de SW0 até SW7 em @17
+
+    # Verifica se é um valor válido para as unidades dos minutos
+
+    LDA R7 @17            # Carrega o valor de SW0 até SW7 para R7
+    CHECK R7 @8          # Compara o valor de SW0 até SW7 com 10
+    JLT @.FLAG_ALARM_T_S # Se for menor que 10, pula para a label FLAG_ALARM_T_S
+    JMP @.RETURN # Se for maior que 10, não seta o valor e retorna
+
+.FLAG_ALARM_T_S:
+    LDI R3 $60            # Seta o valor 60 para R3
+    STA R3 @256           # Acende os LEDR5, LEDR4, LEDR3 e LEDR2 para indicar que os valores das dezenas, unidade de horas e dezenas de minutos do alarme foram setados
+    STA R1 @39            # Ativa a flag de ajuste das unidades dos minutos
+
+    STA R1 @258           # Acende o LEDR9 para indicar que é o alarme que está sendo setado, e não o timer
+
+    RET
+
+.SET_ALARM_TENS_SECONDS:
+    LDA R7 @38            # Carrega o valor da flag de ajuste das dezenas dos segundos para R7
+    CHECK R7 @7           # Verifica se a flag de ajuste das dezenas dos segundos está setada
+    JEQ @.SET_ALARM_UNITS_SECONDS # Se estiver, pula para a label SET_ALARM_UNITS_SECONDS
+
+    LDA R7 @320          # Carrega o r7 com a leitura das chaves SW0 até SW7
+    ANDI R7 @45           # Aplica máscara AND para não haver leitura do SW7 ~ SW4
+    STA R7 @16           # Salva o valor de SW0 até SW7 em @16
+
+    # Verifica se é um valor válido para as dezenas dos segundos
+
+    LDA R7 @16            # Carrega o valor de SW0 até SW7 para R7
+    CHECK R7 @9          # Compara o valor de SW0 até SW7 com 6
+    JLT @.FLAG_ALARM_U_S # Se for menor que 6, pula para a label FLAG_ALARM_U_S
+    JMP @.RETURN # Se for maior que 6, não seta o valor e retorna
+
+.FLAG_ALARM_U_S:
+    LDI R3 $62            # Seta o valor 62 para R3
+    STA R3 @256           # Acende o LEDR5, LEDR4, LEDR3, LEDR2 e LEDR1 para indicar que os valores das dezenas, unidade de horas, dezenas e unidade dos minutos do alarme foram setados
+    STA R1 @38            # Ativa a flag de ajuste das dezenas dos segundos
+
+    STA R1 @258           # Acende o LEDR9 para indicar que é o alarme que está sendo setado, e não o timer
+
+    RET
+
+.SET_ALARM_UNITS_SECONDS:
+    LDA R7 @37            # Carrega o valor da flag de ajuste das unidades dos segundos para R7
+    CHECK R7 @7           # Verifica se a flag de ajuste das unidades dos segundos está setada
+    JEQ @.ALARM_SET       # Se estiver, pula para a label ALARM_SET
+
+    LDA R7 @320          # Carrega o r7 com a leitura das chaves SW0 até SW7
+    ANDI R7 @45           # Aplica máscara AND para não haver leitura do SW7 ~ SW4
+    STA R7 @15           # Salva o valor de SW0 até SW7 em @15
+
+    # Verifica se é um valor válido para as unidades dos segundos
+
+    LDA R7 @15            # Carrega o valor de SW0 até SW7 para R7
+    CHECK R7 @8          # Compara o valor de SW0 até SW7 com 10
+    JLT @.ALARM_SET # Se for menor que 10, pula para a label ALARM_SET
+    JMP @.RETURN # Se for maior que 10, não seta o valor e retorna
+
+.ALARM_SET:
+    LDI R3 $63            # Seta o valor 63 para R3
+    STA R3 @256           # Acende o LEDR5, LEDR4, LEDR3, LEDR2, LEDR1 e LEDR0 para indicar que os valores das dezenas, unidade de horas, dezenas e unidade de minutos e dezenas e unidade dos segundos do alarme foram setados
+    STA R1 @14            # Ativa a flag de alarme setado
+
+    RET
+
+.CHECK_ALARM:
+    LDA R7 @44            # Carrega o valor da flag de alarme atingido para R7
+    CHECK R7 @7           # Verifica se a flag de alarme atingido está setada
+    JEQ @.ALARM_SHOOT     # Se estiver, pula para a label ALARM_SHOOT
+
+    LDA R7 @14            # Carrega o valor da flag de alarme setado para R7
+    CHECK R7 @7           # Verifica se a flag de alarme setado está setada
+    JNE @.RETURN          # Se não estiver, retorna
+
+    # Verifica se o alarme foi atingido, começando pelas dezenas das horas
+
+    LDA R7 @5             # Carrega o valor das dezenas das horas do alarme para R7
+    CHECK R7 @20          # Verifica se o valor das dezenas das horas do alarme é igual ao valor das dezenas das horas do timer
+    JNE @.RETURN          # Se não for, retorna
+
+    # Se chegou até aqui, as dezenas das horas são iguais
+
+    LDA R7 @4             # Carrega o valor das unidades das horas do alarme para R7
+    CHECK R7 @19          # Verifica se o valor das unidades das horas do alarme é igual ao valor das unidades das horas do timer
+    JNE @.RETURN          # Se não for, retorna
+
+    # Se chegou até aqui, as horas são iguais
+
+    LDA R7 @3             # Carrega o valor das dezenas dos minutos do alarme para R7
+    CHECK R7 @18          # Verifica se o valor das dezenas dos minutos do alarme é igual ao valor das dezenas dos minutos do timer
+    JNE @.RETURN          # Se não for, retorna
+
+    # Se chegou até aqui, as dezenas dos minutos são iguais
+
+    LDA R7 @2             # Carrega o valor das unidades dos minutos do alarme para R7
+    CHECK R7 @17          # Verifica se o valor das unidades dos minutos do alarme é igual ao valor das unidades dos minutos do timer
+    JNE @.RETURN          # Se não for, retorna
+
+    # Se chegou até aqui, os minutos são iguais
+
+    LDA R7 @1             # Carrega o valor das dezenas dos segundos do alarme para R7
+    CHECK R7 @16          # Verifica se o valor das dezenas dos segundos do alarme é igual ao valor das dezenas dos segundos do timer
+    JNE @.RETURN          # Se não for, retorna
+
+    # Se chegou até aqui, as dezenas dos segundos são iguais
+
+    LDA R7 @0             # Carrega o valor das unidades dos segundos do alarme para R7
+    CHECK R7 @15          # Verifica se o valor das unidades dos segundos do alarme é igual ao valor das unidades dos segundos do timer
+    JNE @.RETURN          # Se não for, retorna
+
+    # Se chegou até aqui, o alarme foi atingido
+
+    STA R1 @44            # Ativa a flag de alarme atingido
+
+    RET
+
+.ALARM_SHOOT:
+    STA R0 @258           # Apaga o LEDR9 para indicar que o alarme foi atingido
+
+    STA R0 @256           # Apaga os LEDs de ajuste e valor do alarme
+
+    # Reseta os endereços de ajuste e valor do alarme
+
+    STA R0 @14            # 0 -> Flag de alarme setado
+
+    STA R0 @15            # 0 -> Valor das unidades dos segundos do alarme
+    STA R0 @16            # 0 -> Valor das dezenas dos segundos do alarme
+    STA R0 @17            # 0 -> Valor das unidades dos minutos do alarme
+    STA R0 @18            # 0 -> Valor das dezenas dos minutos do alarme
+    STA R0 @19            # 0 -> Valor das unidades das horas do alarme
+    STA R0 @20            # 0 -> Valor das dezenas das horas do alarme
+
+    STA R0 @37            # 0 -> Flag de ajuste das unidades dos segundos do alarme
+    STA R0 @38            # 0 -> Flag de ajuste das dezenas dos segundos
+    STA R0 @39            # 0 -> Flag de ajuste das unidades dos segundos
+    STA R0 @40            # 0 -> Flag de ajuste das dezenas dos minutos
+    STA R0 @41            # 0 -> Flag de ajuste das unidades dos minutos
+    STA R0 @42            # 0 -> Flag de ajuste das dezenas (>= 2) das horas
+    STA R0 @43            # 0 -> Flag de ajuste das dezenas (< 2) das horas
+
+    STA R0 @44   # 0 -> Flag de chegou no horário do alarme
+
+    RET
+
+.TIMER_SET_LED:
+    STA R0 @257           # Apaga o LEDR8
+
+    LDA R7 @27            # Carrega o valor da flag de timer setado para R7
+    CHECK R7 @7           # Verifica se a flag de timer setado está setada
+    JNE @.RETURN          # Se não estiver, retorna
+
+    STA R1 @257           # Acende o LEDR8
+
+    RET
+
+.ALARM_SET_LED:
+    STA R0 @258           # Apaga o LEDR9
+
+    LDA R7 @14            # Carrega o valor da flag de alarme setado para R7
+    CHECK R7 @7           # Verifica se a flag de alarme setado está setada
+    JNE @.RETURN          # Se não estiver, retorna
+
+    STA R1 @258           # Acende o LEDR9
+
+    RET
+
+.RETURN:
+    RET 

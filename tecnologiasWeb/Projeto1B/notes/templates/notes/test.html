@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Validação de formulário</title>
+	<link rel="stylesheet" type="text/css" href="validacao.css">
+	<script src="validacao.js"></script>
+</head>
+<body>
+	<form name="meuForm" onsubmit="return validar()" method="post">
+		<label for="titulo">Título:</label><br>
+		<input type="text" id="titulo" name="titulo"><br>
+
+		<label for="conteudo">Conteúdo:</label><br>
+		<textarea id="conteudo" name="conteudo"></textarea><br>
+
+		<label for="classificacao">Classificação:</label><br>
+		<input type="text" id="classificacao" name="classificacao"><br>
+
+		<input type="submit" value="Enviar">
+	</form>
+</body>
+</html>
