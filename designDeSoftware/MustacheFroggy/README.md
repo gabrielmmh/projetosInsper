@@ -1,8 +1,8 @@
-Projeto final de Design de Software
+## Projeto final de Design de Software
 
 Gabriel Mendonça, Lucas Tachdjian e Pedro Civita
 
-Para executar o código, dê play no main.py
+Para iniciar o jogo, execute o main.py e se divirta!
 
 Referências:
 
