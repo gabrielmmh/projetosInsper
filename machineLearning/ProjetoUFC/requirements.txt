@@ -1,0 +1,11 @@
+shap
+numpy
+scipy
+pandas
+xgboost
+seaborn
+IPython
+graphviz
+matplotlib
+scikit-learn
+ydata_profiling
